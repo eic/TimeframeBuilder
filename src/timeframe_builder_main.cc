@@ -12,7 +12,7 @@ int main(int argc, char* argv[]) {
         // Create the merger
         TimeframeBuilder merger(config);
         
-        // Create appropriate data handler based on output file extension and reader config
+        // Create appropriate data handler based on output file extension and reader/writer config
         auto data_handler = DataHandler::create(config);
         merger.setDataHandler(std::move(data_handler));
         

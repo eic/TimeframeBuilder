@@ -2,6 +2,10 @@
 #include "EDM4hepDataHandler.h"
 #include "PodioEDM4hepDataHandler.h"
 #include "PodioROOTDataHandler.h"
+#ifdef HAVE_ARROW
+#include "ArrowDataHandler.h"
+#include "ArrowFromEDM4hepDataHandler.h"
+#endif
 #ifdef HAVE_HEPMC3
 #include "HepMC3DataHandler.h"
 #endif
@@ -73,6 +77,21 @@ std::unique_ptr<DataHandler> DataHandler::create(const MergerConfig& config) {
             return std::make_unique<PodioEDM4hepDataHandler>();
         }
         return std::make_unique<EDM4hepDataHandler>();
+    }
+
+    // Arrow output: triggered by .arrow extension OR --writer arrow
+    // (the latter allows writing to /dev/null for throughput-only benchmarks)
+    if (hasExtension(filename, ".arrow") || config.writer == "arrow") {
+#ifdef HAVE_ARROW
+        if (config.reader == "root") {
+            return std::make_unique<ArrowFromEDM4hepDataHandler>();
+        }
+        return std::make_unique<ArrowDataHandler>();
+#else
+        throw std::runtime_error(
+            "Arrow output requested but this build was compiled without Arrow support.\n"
+            "Rebuild with Arrow C++ installed and available to CMake.");
+#endif
     }
 
     // Unsupported format

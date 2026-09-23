@@ -83,7 +83,7 @@ protected:
 public:
     /**
      * Factory method to create appropriate data handler based on filename and config
-     * @param config Merger configuration (output_file and reader fields used)
+     * @param config Merger configuration (output_file, reader, and writer fields used)
      * @return Unique pointer to appropriate DataHandler implementation
      * @throws std::runtime_error if format is not supported
      */
