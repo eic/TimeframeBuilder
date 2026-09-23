@@ -197,7 +197,12 @@ void CommandLineParser::loadYAMLConfig(const std::string& config_file, MergerCon
     if (yaml["random_seed"]) config.random_seed = yaml["random_seed"].as<unsigned int>();
     if (yaml["introduce_offsets"]) config.introduce_offsets = yaml["introduce_offsets"].as<bool>();
 
-    if (yaml["writer"]) config.writer = yaml["writer"].as<std::string>();
+    if (yaml["writer"]) {
+        config.writer = yaml["writer"].as<std::string>();
+        if (config.writer != "root") {
+            throw std::runtime_error("Invalid writer value in YAML config: '" + config.writer + "'. Must be 'root'.");
+        }
+    }
 
     if (yaml["sources"]) {
         config.sources.clear();
