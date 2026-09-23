@@ -73,10 +73,12 @@ public:
     std::string getFormatName() const override { return "EDM4hep"; }
 
 private:
-    std::unique_ptr<TFile> output_file_;
     TTree* output_tree_ = nullptr;
+
+protected:
     EDM4hepMergedCollections collections_;
-    
+    std::unique_ptr<TFile> output_file_;
+
     // Store validated EDM4hep data sources (non-owning pointers)
     std::vector<EDM4hepDataSource*> edm4hep_sources_;
     
@@ -87,8 +89,8 @@ private:
 
     // Helper methods
     void setupOutputTree();
-    void discoverCollections(const std::vector<std::unique_ptr<DataSource>>& sources);
-    std::vector<std::string> discoverCollectionNames(DataSource& source, const std::string& branch_pattern);
+    virtual void discoverCollections(const std::vector<std::unique_ptr<DataSource>>& sources);
+    virtual std::vector<std::string> discoverCollectionNames(DataSource& source, const std::string& branch_pattern);
     std::vector<std::string> discoverGPBranches(DataSource& source);
     void copyPodioMetadata(const std::vector<std::unique_ptr<DataSource>>& sources);
     void copyAndUpdatePodioMetadataTree(TTree* source_metadata_tree, TFile* output_file);
