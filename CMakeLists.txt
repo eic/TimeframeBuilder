@@ -58,6 +58,21 @@ else()
     message(STATUS "HepMC3 not found - HepMC3 backend will not be available")
 endif()
 
+# Find Arrow (optional, for Arrow IPC stream input/output)
+find_package(Arrow QUIET)
+if(Arrow_FOUND)
+    message(STATUS "Arrow found - enabling Arrow IPC input/output support")
+    target_sources(timeframe_builder PRIVATE src/ArrowFromEDM4hepDataHandler.cc)
+    target_sources(timeframe_builder PRIVATE src/ArrowDataHandler.cc)
+    target_compile_definitions(timeframe_builder PRIVATE HAVE_ARROW)
+    target_link_libraries(timeframe_builder Arrow::arrow_shared)
+    if(TARGET podio::podioArrow)
+        target_link_libraries(timeframe_builder podio::podioArrow)
+    endif()
+else()
+    message(STATUS "Arrow not found - Arrow IPC input/output not available")
+endif()
+
 # Link against ROOT, PODIO and EDM4HEP
 target_link_libraries(timeframe_builder
     ${ROOT_LIBRARIES}
