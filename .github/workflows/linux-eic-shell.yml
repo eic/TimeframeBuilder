@@ -136,6 +136,58 @@ jobs:
         path: edm4hep_merge_memory.csv
         retention-days: 1
 
+  test-edm4hep-podio:
+    needs: epic-simulations
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v4
+    - uses: cvmfs-contrib/github-action-cvmfs@v5
+    - name: Download build artifacts
+      uses: actions/download-artifact@v7
+      with:
+        name: timeframe-builder-binaries
+    - name: Fix binary permissions
+      run: chmod +x install/bin/timeframe_builder
+    - name: Fix script permissions
+      run: chmod +x .github/scripts/monitor_memory.sh
+    - name: Download separate EPIC simulation output
+      uses: actions/download-artifact@v4
+      with:
+        name: epic-simulated-separate
+    - name: EDM4hep merging with podio reader
+      uses: eic/run-cvmfs-osg-eic-shell@main
+      with:
+        platform-release: "eic_xl:nightly"
+        run: |
+          # EDM4hep smoke test using the podio reader backend
+          ./install/bin/timeframe_builder --config configs/config_ci.yml \
+            --output merged_ci_18x275_podio.edm4hep.root \
+            --reader podio \
+            --source:signal:input_files epic_sim_ci_signal.edm4hep.root \
+            --source:minbias:input_files epic_sim_ci_minbias.edm4hep.root \
+            --source:hadron_beamgas:input_files epic_sim_ci_hadron_beamgas.edm4hep.root \
+            --source:electron_beamgas_brems:input_files epic_sim_ci_electron_beamgas_brems.edm4hep.root \
+            --source:electron_beamgas_coulomb:input_files epic_sim_ci_electron_beamgas_coulomb.edm4hep.root \
+            --source:electron_beamgas_touschek:input_files epic_sim_ci_electron_beamgas_touschek.edm4hep.root \
+            --source:electron_synchrotron:input_files epic_sim_ci_electron_synchrotron.edm4hep.root &
+          TF_PID=$!
+          .github/scripts/monitor_memory.sh $TF_PID podio_merge_memory.csv
+          wait $TF_PID
+
+          ls -lh merged_ci_18x275_podio.edm4hep.root
+    - name: Upload EDM4hep (podio) merger output
+      uses: actions/upload-artifact@v6
+      with:
+        name: edm4hep-podio-merged
+        path: merged_ci_18x275_podio.edm4hep.root
+        retention-days: 1
+    - name: Upload podio memory report
+      uses: actions/upload-artifact@v6
+      with:
+        name: edm4hep-podio-merge-memory
+        path: podio_merge_memory.csv
+        retention-days: 1
+
   test-hepmc3:
     needs: build
     runs-on: ubuntu-24.04
