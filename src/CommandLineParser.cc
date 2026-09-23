@@ -198,7 +198,12 @@ void CommandLineParser::loadYAMLConfig(const std::string& config_file, MergerCon
     if (yaml["random_seed"]) config.random_seed = yaml["random_seed"].as<unsigned int>();
     if (yaml["introduce_offsets"]) config.introduce_offsets = yaml["introduce_offsets"].as<bool>();
 
-    if (yaml["reader"]) config.reader = yaml["reader"].as<std::string>();
+    if (yaml["reader"]) {
+        config.reader = yaml["reader"].as<std::string>();
+        if (config.reader != "root" && config.reader != "podio") {
+            throw std::runtime_error("Invalid YAML 'reader' value: '" + config.reader + "'. Must be 'root' or 'podio'.");
+        }
+    }
 
     if (yaml["writer"]) {
         config.writer = yaml["writer"].as<std::string>();
