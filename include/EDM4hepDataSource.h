@@ -40,32 +40,32 @@ public:
     void loadEvent(size_t event_index) override;
 
     // Data processing methods for EDM4hep format
-    std::vector<edm4hep::MCParticleData>& processMCParticles(size_t particle_parents_offset,
+    virtual std::vector<edm4hep::MCParticleData>& processMCParticles(size_t particle_parents_offset,
                                                              size_t particle_daughters_offset,
                                                              int totalEventsConsumed);
     
-    std::vector<podio::ObjectID>& processObjectID(const std::string& collection_name, 
+    virtual std::vector<podio::ObjectID>& processObjectID(const std::string& collection_name, 
                                                   size_t index_offset, int totalEventsConsumed);
     
-    std::vector<edm4hep::SimTrackerHitData>& processTrackerHits(const std::string& collection_name,
+    virtual std::vector<edm4hep::SimTrackerHitData>& processTrackerHits(const std::string& collection_name,
                                                               size_t particle_index_offset,
                                                               int totalEventsConsumed);
     
-    std::vector<edm4hep::SimCalorimeterHitData>& processCaloHits(const std::string& collection_name,
+    virtual std::vector<edm4hep::SimCalorimeterHitData>& processCaloHits(const std::string& collection_name,
                                                                 size_t particle_index_offset,
                                                                 int totalEventsConsumed);
-    std::vector<edm4hep::CaloHitContributionData>& processCaloContributions(const std::string& collection_name,
-                                                                           size_t particle_index_offset,
-                                                                           int totalEventsConsumed);
+    virtual std::vector<edm4hep::CaloHitContributionData>& processCaloContributions(const std::string& collection_name,
+                                                                          size_t particle_index_offset,
+                                                                          int totalEventsConsumed);
 
-    std::vector<std::string>& processGPBranch(const std::string& branch_name);
-    std::vector<std::vector<int>>& processGPIntValues();
-    std::vector<std::vector<float>>& processGPFloatValues();
-    std::vector<std::vector<double>>& processGPDoubleValues();
-    std::vector<std::vector<std::string>>& processGPStringValues();
+    virtual std::vector<std::string>& processGPBranch(const std::string& branch_name);
+    virtual std::vector<std::vector<int>>& processGPIntValues();
+    virtual std::vector<std::vector<float>>& processGPFloatValues();
+    virtual std::vector<std::vector<double>>& processGPDoubleValues();
+    virtual std::vector<std::vector<std::string>>& processGPStringValues();
     
     // Event header processing
-    std::vector<edm4hep::EventHeaderData>& processEventHeaders(const std::string& collection_name);
+    virtual std::vector<edm4hep::EventHeaderData>& processEventHeaders(const std::string& collection_name);
     
     // Status and diagnostics
     void printStatus() const override;
