@@ -46,4 +46,8 @@ struct MergerConfig {
     std::string output_file{"merged_timeframes.edm4hep.root"};
     size_t max_events{100};
     bool   merge_particles{false};
+
+    // Backend writer: "root" (ROOT TTree, default). Other backends (podio,
+    // arrow) register additional accepted values as they land.
+    std::string writer{"root"};
 };
