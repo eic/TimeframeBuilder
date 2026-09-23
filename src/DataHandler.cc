@@ -1,5 +1,8 @@
 #include "DataHandler.h"
 #include "EDM4hepDataHandler.h"
+#ifdef HAVE_ARROW
+#include "ArrowFromEDM4hepDataHandler.h"
+#endif
 #ifdef HAVE_HEPMC3
 #include "HepMC3DataHandler.h"
 #endif
@@ -41,25 +44,39 @@ void DataHandler::mergeEvents(std::vector<std::unique_ptr<DataSource>>& sources,
               << ": " << total_events_consumed << std::endl;
 }
 
-std::unique_ptr<DataHandler> DataHandler::create(const std::string& filename) {
+std::unique_ptr<DataHandler> DataHandler::create(const MergerConfig& config) {
+    const std::string& filename = config.output_file;
+
     // Helper lambda to check file extension
-    auto hasExtension = [](const std::string& filename, const std::string& ext) {
-        if (filename.length() < ext.length()) return false;
-        return filename.compare(filename.length() - ext.length(), ext.length(), ext) == 0;
+    auto hasExtension = [](const std::string& fn, const std::string& ext) {
+        if (fn.length() < ext.length()) return false;
+        return fn.compare(fn.length() - ext.length(), ext.length(), ext) == 0;
     };
-    
+
 #ifdef HAVE_HEPMC3
     // Check if filename ends with .hepmc3.tree.root (more specific first)
     if (hasExtension(filename, ".hepmc3.tree.root")) {
         return std::make_unique<HepMC3DataHandler>();
     }
 #endif
-    
+
     // Check if filename ends with .edm4hep.root
     if (hasExtension(filename, ".edm4hep.root")) {
         return std::make_unique<EDM4hepDataHandler>();
     }
-    
+
+    // Arrow output: triggered by .arrow extension OR --writer arrow
+    // (the latter allows writing to /dev/null for throughput-only benchmarks)
+    if (hasExtension(filename, ".arrow") || config.writer == "arrow") {
+#ifdef HAVE_ARROW
+        return std::make_unique<ArrowFromEDM4hepDataHandler>();
+#else
+        throw std::runtime_error(
+            "Arrow output requested but this build was compiled without Arrow support.\n"
+            "Rebuild with Arrow C++ installed and available to CMake.");
+#endif
+    }
+
     // Unsupported format
     std::string error_msg = "Unsupported data format: " + filename + "\n"
         "Currently supported formats:\n"
