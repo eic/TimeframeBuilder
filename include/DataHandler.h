@@ -82,10 +82,10 @@ protected:
 
 public:
     /**
-     * Factory method to create appropriate data handler based on filename
-     * @param filename Output file path
+     * Factory method to create appropriate data handler based on filename and config
+     * @param config Merger configuration (output_file and reader fields used)
      * @return Unique pointer to appropriate DataHandler implementation
      * @throws std::runtime_error if format is not supported
      */
-    static std::unique_ptr<DataHandler> create(const std::string& filename);
+    static std::unique_ptr<DataHandler> create(const MergerConfig& config);
 };

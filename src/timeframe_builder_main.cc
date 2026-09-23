@@ -12,8 +12,8 @@ int main(int argc, char* argv[]) {
         // Create the merger
         TimeframeBuilder merger(config);
         
-        // Create appropriate data handler based on output file extension
-        auto data_handler = DataHandler::create(config.output_file);
+        // Create appropriate data handler based on output file extension and reader config
+        auto data_handler = DataHandler::create(config);
         merger.setDataHandler(std::move(data_handler));
         
         // Run the merger
