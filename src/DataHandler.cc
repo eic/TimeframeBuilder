@@ -64,6 +64,9 @@ std::unique_ptr<DataHandler> DataHandler::create(const MergerConfig& config) {
         if (reader == "podio") {
             return std::make_unique<PodioEDM4hepDataHandler>();
         }
+        if (reader != "root") {
+            throw std::runtime_error("Invalid reader value: '" + reader + "'. Must be 'root' or 'podio'.");
+        }
         return std::make_unique<EDM4hepDataHandler>();
     }
 

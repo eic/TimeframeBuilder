@@ -79,12 +79,10 @@ bool PodioEDM4hepDataSource::loadNextEvent() {
         }
         return false;
     }
-    auto frame_data = reader_.readNextEntry(config_->tree_name);
-    if (!frame_data) {
-        return false;
-    }
-    ++next_sequential_index_;
-    storeFrame(podio::Frame(std::move(frame_data)));
+    // Delegate to loadEvent() so the reader position always follows
+    // current_entry_index_ (honoring skip and any prior non-sequential seek),
+    // rather than blindly trusting the reader's own internal cursor.
+    loadEvent(current_entry_index_);
     return true;
 }
 
@@ -263,7 +261,9 @@ void PodioEDM4hepDataSource::extractCaloHits(const podio::Frame& frame) {
 
         auto& hits              = cached_calo_hits_[name];
         auto& contrib_refs      = cached_objectids_["_" + name + "_contributions"];
-        auto& contribs          = cached_calo_contribs_[name];
+        // Keyed by contrib_name (not name) to match how processCaloContributions()
+        // looks this up — it's called with the "...Contributions" collection name.
+        auto& contribs          = cached_calo_contribs_[contrib_name];
         auto& contrib_particle_refs = cached_objectids_["_" + contrib_name + "_particle"];
 
         hits.reserve(coll.size());
@@ -496,6 +496,11 @@ std::vector<std::string> PodioEDM4hepDataSource::getAvailableCollections() const
 // Diagnostics
 // ---------------------------------------------------------------------------
 DataSource::VertexPosition PodioEDM4hepDataSource::getBeamVertexPosition() const {
+    // UpdateTimeOffset() (and hence this call) runs before processEvent()/
+    // processMCParticles() for the current event, so cached_mcparticles_ may
+    // still be empty from clearCaches(). Force the lazy extraction here too.
+    const_cast<PodioEDM4hepDataSource*>(this)->ensureMCParticlesExtracted();
+
     VertexPosition vertex{0.0f, 0.0f, 0.0f};
     for (const auto& p : cached_mcparticles_) {
         if (p.generatorStatus == 1) {
