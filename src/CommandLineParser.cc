@@ -16,7 +16,7 @@ void CommandLineParser::printUsage(const char* program_name) {
               << "  -d, --duration TIME         Timeframe duration in ns (default: 20.0)\n"
               << "  -p, --bunch-period PERIOD   Bunch crossing period in ns (default: 10.0)\n"
               << "  --random-seed SEED          Random number generator seed (default: 0, use random_device)\n"
-              << "  --reader BACKEND            Input backend: 'root' (TChain/TTree, default) or 'podio' (podio::ROOTFrameReader)\n"
+              << "  --reader BACKEND            Input backend: 'root' (TChain/TTree, default), 'podio' (podio::ROOTFrameReader), or 'arrow' (Arrow IPC stream)\n"
               << "  -h, --help                  Show this help message\n"
               << "  -v, --version               Show version information\n"
               << "\nDefault Source Options (backward compatibility):\n"
@@ -453,8 +453,8 @@ MergerConfig CommandLineParser::parse(int argc, char* argv[]) {
                 break;
             case 1007:
                 config.reader = optarg;
-                if (config.reader != "root" && config.reader != "podio") {
-                    throw std::runtime_error("Invalid --reader value: '" + config.reader + "'. Must be 'root' or 'podio'.");
+                if (config.reader != "root" && config.reader != "podio" && config.reader != "arrow") {
+                    throw std::runtime_error("Invalid --reader value: '" + config.reader + "'. Must be 'root', 'podio', or 'arrow'.");
                 }
                 break;
             case 'h':

@@ -1,6 +1,9 @@
 #include "DataHandler.h"
 #include "EDM4hepDataHandler.h"
 #include "PodioEDM4hepDataHandler.h"
+#ifdef HAVE_ARROW
+#include "ArrowInputDataHandler.h"
+#endif
 #ifdef HAVE_HEPMC3
 #include "HepMC3DataHandler.h"
 #endif
@@ -64,6 +67,12 @@ std::unique_ptr<DataHandler> DataHandler::create(const MergerConfig& config) {
         if (reader == "podio") {
             return std::make_unique<PodioEDM4hepDataHandler>();
         }
+#ifdef HAVE_ARROW
+        if (reader == "arrow") {
+            // Arrow reader + ROOT TTree output (default)
+            return std::make_unique<ArrowInputDataHandler>();
+        }
+#endif
         return std::make_unique<EDM4hepDataHandler>();
     }
 
