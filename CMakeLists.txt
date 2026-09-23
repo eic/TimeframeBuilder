@@ -39,6 +39,7 @@ add_executable(timeframe_builder
     src/DataHandler.cc
     src/EDM4hepDataHandler.cc
     src/PodioEDM4hepDataHandler.cc
+    src/EDM4hepFrameBuilder.cc
     src/TimeframeBuilder.cc
     src/CommandLineParser.cc
     src/timeframe_builder_main.cc
