@@ -59,16 +59,20 @@ podio::Frame buildEDM4hepFrame(
         const auto& pd = col.mcparticles[i];
         auto& mp = mutable_particles[i];
         for (unsigned j = pd.parents_begin; j < pd.parents_end; ++j) {
-            int idx = col.mcparticle_parents_refs[j].index;
+            int idx = col.mcparticle_parents_refs.at(j).index;
             if (idx >= 0 && idx < static_cast<int>(mutable_particles.size()))
                 mp.addToParents(mutable_particles[idx]);
         }
         for (unsigned j = pd.daughters_begin; j < pd.daughters_end; ++j) {
-            int idx = col.mcparticle_daughters_refs[j].index;
+            int idx = col.mcparticle_daughters_refs.at(j).index;
             if (idx >= 0 && idx < static_cast<int>(mutable_particles.size()))
                 mp.addToDaughters(mutable_particles[idx]);
         }
     }
+    // Moving mc_coll only transfers management responsibility for the underlying
+    // MCParticleObj instances (podio::utils::MaybeSharedPtr, a refcounted handle);
+    // it does not destroy or relocate them. The mutable_particles handles created
+    // above remain valid and are used below to link tracker/calo hits to particles.
     frame.put(std::move(mc_coll), "MCParticles");
 
     // --- SimTrackerHits ---
