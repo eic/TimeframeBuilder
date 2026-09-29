@@ -153,7 +153,7 @@ bool CommandLineParser::handleSourceOption(std::vector<SourceConfig>& sources, c
         std::vector<std::string> files = splitCommaSeparated(value);
         source->input_files  = expandGlobPatterns(files);
     } else if (property == "skip") {
-        source->skip = std::stoi(value);
+        source->skip = std::stoll(value);
     } else if (property == "frequency") {
         source->mean_event_frequency = std::stof(value);
     } else if (property == "static_events") {

@@ -47,6 +47,7 @@ private:
     size_t m_current_file; // Index of the current input file being processed
     size_t m_total_files;  // Total number of input files
     long long m_still_to_skip; // Number of events still to skip
+    std::vector<size_t> m_file_entries; // Number of entries in the input files
     
     // Private helper methods
     void openNextFile();
