@@ -15,8 +15,8 @@ permissions:
   contents: read
 
 env:
-  XROOTD_SERVER: root://dtn-eic.jlab.org/
-  HEPMC3_PATH: /volatile/eic/EPIC/EVGEN/
+  XROOTD_SERVER: root://dtn2304.jlab.org:8443/
+  HEPMC3_PATH: /jlab-osdf-ro/eic/EPIC/volatile/EVGEN/
   HEPMC3_SIGNAL_PATH: DIS/NC/18x275/minQ2=1000/pythia8NCDIS_18x275_minQ2=1000_beamEffects_xAngle=-0.025_hiDiv_1.hepmc3.tree.root
   HEPMC3_MINBIAS_PATH: SIDIS/pythia6-eic/1.0.0/18x275/q2_0to1/pythia_ep_noradcor_18x275_q2_0.000000001_1.0_run1.ab.hepmc3.tree.root
   HEPMC3_HADRON_BEAMGAS_PATH: BACKGROUNDS/BEAMGAS/proton/pythia8.306-1.0/275GeV/pythia8.306-1.0_ProtonBeamGas_275GeV_run001.hepmc3.tree.root
