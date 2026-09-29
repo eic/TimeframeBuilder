@@ -88,7 +88,6 @@ bool HepMC3DataSource::loadNextEvent() {
         return false;
     }
     
-    current_entry_index_++;
     return true;
 }
 
