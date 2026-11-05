@@ -53,6 +53,13 @@ void HepMC3DataSource::openNextFile() {
 
     std::cout << "Opening HepMC3 file: " << input_file << std::endl;
 
+    // Close the previous reader before replacing it: HepMC3's ReaderRootTree
+    // has no destructor, so a reader dropped without close() keeps its TFile,
+    // TTree and baskets (about 200 MB per reopen of the SYNRAD file).
+    if (reader_) {
+        reader_->close();
+        reader_.reset();
+    }
     // Create ReaderRootTree explicitly for ROOT tree format
     reader_ = std::make_shared<HepMC3::ReaderRootTree>(input_file);
     if (!reader_) {
