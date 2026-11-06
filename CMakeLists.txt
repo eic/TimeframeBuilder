@@ -35,8 +35,10 @@ include_directories(${ROOT_INCLUDE_DIRS})
 add_executable(timeframe_builder
     src/DataSource.cc
     src/EDM4hepDataSource.cc
+    src/PodioEDM4hepDataSource.cc
     src/DataHandler.cc
     src/EDM4hepDataHandler.cc
+    src/PodioEDM4hepDataHandler.cc
     src/TimeframeBuilder.cc
     src/CommandLineParser.cc
     src/timeframe_builder_main.cc
