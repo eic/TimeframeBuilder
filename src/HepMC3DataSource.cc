@@ -55,7 +55,7 @@ void HepMC3DataSource::openNextFile() {
 
     // Close the previous reader before replacing it: HepMC3's ReaderRootTree
     // has no destructor, so a reader dropped without close() keeps its TFile,
-    // TTree and baskets (about 200 MB per reopen of the SYNRAD file).
+    // TTree and baskets.
     if (reader_) {
         reader_->close();
         reader_.reset();
