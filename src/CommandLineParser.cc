@@ -15,6 +15,7 @@ void CommandLineParser::printUsage(const char* program_name) {
               << "  -n, --nevents N             Maximum number of timeframes to generate (default: 100)\n"
               << "  -d, --duration TIME         Timeframe duration in ns (default: 20.0)\n"
               << "  -p, --bunch-period PERIOD   Bunch crossing period in ns (default: 10.0)\n"
+              << "  -g, --global-phase          Global phase adjustment within bunch crossing in ns (default: 0.0)\n"
               << "  --random-seed SEED          Random number generator seed (default: 0, use random_device)\n"
               << "  --writer BACKEND            Output writer: 'root' (TTree, default)\n"
               << "  -h, --help                  Show this help message\n"
@@ -391,6 +392,7 @@ MergerConfig CommandLineParser::parse(int argc, char* argv[]) {
         {"duration", required_argument, 0, 'd'},
         {"frequency", required_argument, 0, 'f'},
         {"bunch-period", required_argument, 0, 'p'},
+        {"global-phase", required_argument, 0, 'p'},
         {"random-seed", required_argument, 0, 1005},
         {"use-bunch-crossing", no_argument, 0, 'b'},
         {"static-events", no_argument, 0, 's'},
