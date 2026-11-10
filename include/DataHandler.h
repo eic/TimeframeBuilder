@@ -54,7 +54,7 @@ public:
                             size_t timeframe_number,
                             float timeframe_duration,
                             float bunch_crossing_period,
-			    float global_phase,
+                            float global_phase,
                             std::mt19937& gen) final;
 
     /**
