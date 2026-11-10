@@ -342,6 +342,7 @@ void CommandLineParser::printConfiguration(const MergerConfig& config) {
     std::cout << "Max events: " << config.max_events << std::endl;
     std::cout << "Timeframe duration: " << config.timeframe_duration << " ns" << std::endl;
     std::cout << "Bunch crossing period: " << config.bunch_crossing_period << " ns" << std::endl;
+    std::cout << "Crossing global phase: " << config.global_phase << " ns" << std::endl;
     std::cout << "Random seed: " << config.random_seed << (config.random_seed == 0 ? " (using random_device)" : "") << std::endl;
     std::cout << "Introduce offsets: " << (config.introduce_offsets ? "true" : "false") << std::endl;
     std::cout << "Writer backend: " << config.writer << std::endl;
