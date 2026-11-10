@@ -4,7 +4,7 @@
 
 void DataSource::UpdateTimeOffset(float timeframe_duration,
                                   float bunch_crossing_period,
-				  float global_phase,
+                                  float global_phase,
                                   std::mt19937& rng) {
     float distance = 0.0f;
     
