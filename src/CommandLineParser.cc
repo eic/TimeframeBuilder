@@ -15,7 +15,7 @@ void CommandLineParser::printUsage(const char* program_name) {
               << "  -n, --nevents N             Maximum number of timeframes to generate (default: 100)\n"
               << "  -d, --duration TIME         Timeframe duration in ns (default: 20.0)\n"
               << "  -p, --bunch-period PERIOD   Bunch crossing period in ns (default: 10.0)\n"
-              << "  -g, --global-phase          Global phase adjustment within bunch crossing in ns (default: 0.0)\n"
+              << "  -g, --global-phase          Global phase adjustment in fraction of a crossing period (default: 0.0)\n"
               << "  --random-seed SEED          Random number generator seed (default: 0, use random_device)\n"
               << "  --writer BACKEND            Output writer: 'root' (TTree, default)\n"
               << "  -h, --help                  Show this help message\n"
@@ -343,7 +343,7 @@ void CommandLineParser::printConfiguration(const MergerConfig& config) {
     std::cout << "Max events: " << config.max_events << std::endl;
     std::cout << "Timeframe duration: " << config.timeframe_duration << " ns" << std::endl;
     std::cout << "Bunch crossing period: " << config.bunch_crossing_period << " ns" << std::endl;
-    std::cout << "Crossing global phase: " << config.global_phase << " ns" << std::endl;
+    std::cout << "Crossing global phase: " << config.global_phase << std::endl;
     std::cout << "Random seed: " << config.random_seed << (config.random_seed == 0 ? " (using random_device)" : "") << std::endl;
     std::cout << "Introduce offsets: " << (config.introduce_offsets ? "true" : "false") << std::endl;
     std::cout << "Writer backend: " << config.writer << std::endl;
