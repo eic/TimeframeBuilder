@@ -47,7 +47,7 @@ public:
      * @param timeframe_number Current timeframe number
      * @param timeframe_duration Duration of the timeframe in ns
      * @param bunch_crossing_period Bunch crossing period in ns
-     * @param global_phase Bunch crossing global_phase in ns
+     * @param global_phase Bunch crossing global_phase fraction of crossing period
      * @param gen Random number generator
      */
     virtual void mergeEvents(std::vector<std::unique_ptr<DataSource>>& sources,
