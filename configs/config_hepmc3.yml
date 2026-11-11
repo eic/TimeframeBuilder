@@ -5,6 +5,7 @@ output_file: merged_hepmc3.hepmc3.tree.root
 max_events: 100
 timeframe_duration: 2000.0  # nanoseconds
 bunch_crossing_period: 10.0
+global_phase: 0.5
 introduce_offsets: true
 
 sources:
