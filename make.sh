@@ -1,10 +1,6 @@
 #!/bin/bash
-set -euo pipefail
 
 # Build script for timeframe builder
-
-# EIC shell may export these with paths that break the selected Python runtime.
-unset PYTHONHOME PYTHONPATH
 
 echo "=== Building Timeframe Builder ==="
 
