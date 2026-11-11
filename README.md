@@ -1,13 +1,16 @@
 # Timeframe Builder
 
-An application for merging multiple events from hepmc3 root files or simulated edm4hep files into timeframes. All collections of particles and hits are zipped together while maintaining the references between collections.  
+An application for merging events from HepMC3 ROOT-tree files or Podio ROOT
+files (including EDM4hep) into timeframes while preserving collection
+associations.
 
 This tool provides control over timing adjustments allowing optional shifting of the time from each event source based on:
 - Bunch crossing periods.
 - Attachment of backgrounds to beam bunches.
 - Additional Gaussian smearing.
 
-Sources can either be individual events, or an already merged source allowing step by step overlays. *At the moment these seem to take about the same time but hopefully should be possible to speed up using already merged sources*
+Sources can be individual events or already-merged frames, allowing
+step-by-step overlays.
 
 ## Reporting
 CI tests report on the comparison between the output of [eicrecon](https://github.com/eic/EICrecon) when hepmc3 events are merged before simulation with those merging edm4hep events after simulation. [Current capybara report from main](https://eic.github.io/TimeframeBuilder/capybara/main/index.html)
@@ -16,25 +19,36 @@ The memory usage profile during each step is also recorded and reported. [Curren
 
 ## Prerequisites
 
-- **PODIO library and headers** - Required for EDM4hep data I/O operations
-- **EDM4HEP library and headers** - Required for the EDM4HEP data model
-- **HepMC3 library and headers** - Optional, required for HepMC3 format support
+- **PODIO library, compiled datamodel, and ROOT dictionary** - Optional,
+  required for Podio ROOT I/O; EDM4HEP is selected by default when available
+- **HepMC3 library and ROOT I/O component** - Optional, required for HepMC3
+  format support
+- **ROOT** - Required by either data-format backend
 - **yaml-cpp library** - Required for configuration file support
+- **Python 3 with PyYAML** - Required only for the Podio backend
 - **CMake 3.16 or later** - Required for building
 - **C++20 compatible compiler** - Required for compilation
 
-### Optional Dependencies
+The core scheduler and CLI can be built without either data-format backend.
+CMake includes each backend's directory only when its dependencies are found.
+Disable a backend explicitly with `-DTIMEFRAME_BUILDER_ENABLE_PODIO=OFF` or
+`-DTIMEFRAME_BUILDER_ENABLE_HEPMC3=OFF`.
 
-- **HepMC3**: If available, enables support for `.hepmc3.tree.root` format files. If not found during build, only EDM4hep format will be supported.
+The top-level CMake file configures dependencies and selects backends;
+[`core/CMakeLists.txt`](core/CMakeLists.txt),
+[`podio/CMakeLists.txt`](podio/CMakeLists.txt), and
+[`hepmc3/CMakeLists.txt`](hepmc3/CMakeLists.txt) configure their respective
+source groups.
 
 ## Building
 
 ### Quick Build
 
-Use the provided build script for automatic configuration and compilation:
+Use the provided build script for automatic configuration, compilation, and
+installation:
 
 ```bash
-./build.sh
+./make.sh
 ```
 
 ### Manual Build
@@ -70,15 +84,16 @@ make install
 #### Configuration and File I/O Options
 | Option | Description | Default |
 |--------|-------------|---------|
-| `--config <file>` | YAML configuration file | (none) |
+| `--config <file>` | Per-run YAML configuration (sources and timing) | (none) |
+| `--transform-config <file>` | Application/plugin transformation profile | (none; no transformations) |
 | `input_files` | Input ROOT files containing events | (required) |
-| `-o, --output <file>` | Output ROOT file for timeframes | `merged_timeframes.root` |
+| `-o, --output <file>` | Output ROOT file for timeframes | `merged_timeframes.edm4hep.root` |
 | `-n, --nevents <number>` | Maximum number of timeframes to generate | `100` |
 
 #### Timeframe Configuration
 | Option | Description | Default |
 |--------|-------------|---------|
-| `-d, --duration <ns>` | Timeframe duration in nanoseconds | `20.0` |
+| `-d, --duration <ns>` | Timeframe duration in nanoseconds | `2000.0` |
 | `-s, --static-events` | Use static number of events per timeframe (default source) | `false` |
 | `-e, --events-per-frame <number>` | Static events per timeframe (requires `-s`) | `1` |
 | `-f, --frequency <rate>` | Mean event frequency (events/ns) for default source | `1.0` |
@@ -93,7 +108,7 @@ make install
 | `--source:NAME:events_per_frame N` | Static events per timeframe |
 | `--source:NAME:bunch_crossing BOOL` | Enable bunch crossing logic (true/false) |
 | `--source:NAME:beam_attachment BOOL` | Enable beam attachment (true/false) |
-| `--source:NAME:beam_speed SPEED` | Beam speed in ns/mm |
+| `--source:NAME:beam_speed SPEED` | Beam speed in mm/ns |
 | `--source:NAME:beam_spread SPREAD` | Gaussian beam time spread |
 | `--source:NAME:status_offset OFFSET` | Generator status offset |
 
@@ -107,7 +122,7 @@ make install
 | Option | Description | Default |
 |--------|-------------|---------|
 | `--beam-attachment` | Enable beam attachment for particles | `false` |
-| `--beam-speed <ns/mm>` | Beam speed for time-of-flight calculations | `299792.458` |
+| `--beam-speed <mm/ns>` | Beam speed for time-of-flight calculations | `299.792458` |
 | `--beam-spread <ns>` | Gaussian beam time spread (std deviation) | `0.0` |
 
 #### Generator Configuration
@@ -123,17 +138,20 @@ make install
 ## Configuration Files
 
 The application supports YAML configuration files that can be used independently or in combination with command-line arguments.
+Run configurations such as [config.yml](configs/config.yml) and
+[config_hepmc3.yml](configs/config_hepmc3.yml) hold per-run inputs and timing.
+Transformation bindings are separate application profiles:
+[Podio/EDM4hep](configs/timeframe_builder/podio_transformations.yml) and
+[HepMC3](configs/timeframe_builder/hepmc3_transformations.yml).
 
 ### YAML Configuration Structure
 
 ```yaml
 # Global merger configuration
-output_file: merged_timeframes.root
+output_file: merged_timeframes.edm4hep.root
 max_events: 100
 timeframe_duration: 200.0
 bunch_crossing_period: 10.0
-introduce_offsets: true
-
 # Source-specific configuration
 sources:
   - input_files:
@@ -145,7 +163,7 @@ sources:
     use_bunch_crossing: true
     attach_to_beam: false
     beam_angle: 0.0
-    beam_speed: 299792.458
+    beam_speed: 299.792458
     beam_spread: 0.0
     generator_status_offset: 0
     already_merged: false
@@ -167,8 +185,27 @@ sources:
 - `max_events`: Maximum number of timeframes to generate
 - `timeframe_duration`: Duration of each timeframe in nanoseconds
 - `bunch_crossing_period`: Bunch crossing period for discretization
-- `introduce_offsets`: Whether to introduce random time offsets
-- `merge_particles`: Whether to merge particles (advanced feature)
+
+### Application Transformation Profiles
+
+Pass a separate profile with `--transform-config`; transformation rules are
+not part of run configurations and are not enabled implicitly. The timeframe
+builder wrapper parses the profile and passes its event and record rules to
+`EventMerger`.
+
+The [Podio profile](configs/timeframe_builder/podio_transformations.yml)
+applies `time_offset` to numeric `time` members and applies each source's
+`generator_status_offset` to `edm4hep::MCParticle.generatorStatus` in
+`MCParticles`. The [HepMC3 profile](configs/timeframe_builder/hepmc3_transformations.yml)
+targets `HepMC3::GenVertex / vertices / position.t` and
+`HepMC3::GenParticle / particles / status`. Each record rule specifies a
+plugin, datatype, collection, field, and plugin parameters.
+
+`source_time_offset` is an event-level plugin that computes the event context
+from run/source timing and beam settings. `add_context_value` applies a context
+value to the selected numeric field; `add_field_value` derives a field from
+another numeric field in the same record. Omit the profile or either rule
+section to leave those transformations unapplied.
 
 #### Source-Specific Parameters
 - `input_files`: List of input ROOT files for this source
@@ -178,12 +215,14 @@ sources:
 - `static_events_per_timeframe`: Number of events per timeframe (if static mode)
 - `mean_event_frequency`: Mean event frequency in events/ns (if not static mode)
 - `use_bunch_crossing`: Enable bunch crossing time discretization
-- `attach_to_beam`: Enable beam attachment physics
+- `attach_to_beam`: Enable beam attachment in the configured
+  `source_time_offset` event plugin
 - `beam_angle`: Beam angle in radians for time-of-flight calculations
-- `beam_speed`: Beam speed in ns/mm
+- `beam_speed`: Beam speed in mm/ns
 - `beam_spread`: Gaussian time spread for beam smearing
-- `generator_status_offset`: Offset to add to MCParticle generator status
-- `tree_name`: Name of the input TTree (default: "events")
+- `generator_status_offset`: Value exposed to record plugins as the
+  `generator_status_offset` context value
+- `tree_name`: Input Podio category or HepMC3 tree name (default: "events")
 
 ## Mixed Command Line and Configuration Usage
 
@@ -192,19 +231,19 @@ Command-line arguments override YAML configuration values, allowing flexible usa
 ### Pattern 1: Config File with CLI Override
 ```bash
 # Use config.yml but override output file and number of events
-./install/bin/timeframe_builder --config config.yml -o different_output.root -n 500
+./install/bin/timeframe_builder --config configs/config.yml --transform-config configs/timeframe_builder/podio_transformations.yml -o different_output.root -n 500
 ```
 
 ### Pattern 2: Config File with Additional Input Files
 ```bash
 # Use config file and add more input files from command line
-./install/bin/timeframe_builder --config config.yml additional_input.root more_files.root
+./install/bin/timeframe_builder --config configs/config.yml --transform-config configs/timeframe_builder/podio_transformations.yml additional_input.root more_files.root
 ```
 
 ### Pattern 3: Minimal Config with CLI Parameters
 ```bash
 # Use config file for complex source setup, override timing parameters
-./install/bin/timeframe_builder --config multi_source.yml -d 1000.0 -p 25.0
+./install/bin/timeframe_builder --config multi_source.yml --transform-config configs/timeframe_builder/podio_transformations.yml -d 1000.0 -p 25.0
 ```
 
 ### Pattern 4: Source-Specific CLI Configuration
@@ -216,7 +255,7 @@ Command-line arguments override YAML configuration values, allowing flexible usa
 ### Pattern 5: Override Specific Sources from Config
 ```bash
 # Use config file but override specific source configuration
-./install/bin/timeframe_builder --config config.yml --source:signal:input_files new_signal.root --source:signal:frequency 0.8
+./install/bin/timeframe_builder --config configs/config.yml --transform-config configs/timeframe_builder/podio_transformations.yml --source:signal:input_files new_signal.root --source:signal:frequency 0.8
 ```
 
 
@@ -252,7 +291,7 @@ Enable beam attachment with realistic parameters:
 ./install/bin/timeframe_builder \
   --beam-attachment \
   --beam-spread 0.5 \
-  --beam-speed 299792.458 \
+  --beam-speed 299.792458 \
   -d 10000.0 \
   input_events.root
 ```
@@ -263,7 +302,7 @@ Process large number of events with custom output:
 ```bash
 ./install/bin/timeframe_builder \
   -n 10000 \
-  -o large_timeframes.root \
+  -o large_timeframes.edm4hep.root \
   --use-bunch-crossing \
   --bunch-period 2000.0 \
   input1.root input2.root input3.root
@@ -303,7 +342,7 @@ Configure source with beam physics:
 ./install/bin/timeframe_builder \
   --source:beam_events:input_files beam_data.root \
   --source:beam_events:beam_attachment true \
-  --source:beam_events:beam_speed 299792.458 \
+  --source:beam_events:beam_speed 299.792458 \
   --source:beam_events:beam_spread 0.5 \
   --source:beam_events:frequency 0.1
 ```
@@ -314,7 +353,7 @@ Configure source with beam physics:
 
 Use a YAML configuration file for complex setups:
 ```bash
-./install/bin/timeframe_builder --config config.yml
+./install/bin/timeframe_builder --config configs/config.yml --transform-config configs/timeframe_builder/podio_transformations.yml
 ```
 
 #### Using HepMC3 Files
@@ -322,7 +361,7 @@ Use a YAML configuration file for complex setups:
 Process HepMC3 format files (requires HepMC3 library):
 ```bash
 # HepMC3 configuration file
-./install/bin/timeframe_builder --config configs/config_hepmc3.yml
+./install/bin/timeframe_builder --config configs/config_hepmc3.yml --transform-config configs/timeframe_builder/hepmc3_transformations.yml
 
 # Direct command line with HepMC3 files
 ./install/bin/timeframe_builder \
@@ -334,24 +373,21 @@ Process HepMC3 format files (requires HepMC3 library):
 ```
 
 **Note**: The output format is automatically determined by the file extension:
-- `.edm4hep.root` → EDM4hep format output
+- `.edm4hep.root` and `.podio.root` → buffer-oriented podio handler
 - `.hepmc3.tree.root` → HepMC3 format output
-```bash
-./install/bin/timeframe_builder --config config.yml
-```
 
 #### Mixed Configuration and Command Line
 
 Use configuration file but override specific parameters:
 ```bash
 # Override output file and number of timeframes
-./install/bin/timeframe_builder --config config.yml -o custom_output.root -n 500
+./install/bin/timeframe_builder --config configs/config.yml --transform-config configs/timeframe_builder/podio_transformations.yml -o custom_output.edm4hep.root -n 500
 
 # Add additional input files to those specified in config
-./install/bin/timeframe_builder --config config.yml extra_input.root
+./install/bin/timeframe_builder --config configs/config.yml --transform-config configs/timeframe_builder/podio_transformations.yml extra_input.root
 
 # Override timing parameters
-./install/bin/timeframe_builder --config config.yml -d 5000.0 -p 500.0
+./install/bin/timeframe_builder --config configs/config.yml --transform-config configs/timeframe_builder/podio_transformations.yml -d 5000.0 -p 500.0
 ```
 
 #### Working with Pre-merged Timeframes
@@ -359,7 +395,7 @@ Use configuration file but override specific parameters:
 Process already-merged timeframe files:
 ```bash
 # Configuration file with already_merged: true
-./install/bin/timeframe_builder --config config_continue.yml
+./install/bin/timeframe_builder --config configs/config_continue.yml --transform-config configs/timeframe_builder/podio_transformations.yml
 ```
 
 ## Configuration Parameters Details
@@ -398,12 +434,41 @@ Process already-merged timeframe files:
 
 The application supports multiple output formats based on the file extension:
 
-### EDM4hep Format (`.edm4hep.root`)
-The output ROOT file contains:
-- **Tree Name**: `timeframes`
-- **Collections**: All input collections with time adjustments applied
-- **Format**: Standard Podio ROOT format compatible with EDM4HEP readers
-- **Additional Data**: Preserved metadata and collection relationships
+### Podio Format (`.podio.root`, `.edm4hep.root`)
+The buffer-oriented podio handler reads ROOTFrameData without constructing a
+Frame for each input event, merges collection buffers, and writes native podio
+ROOT output. Typed collection adapters and numeric field adapters are generated
+at build time from the datamodel YAML files selected for the build. Generation
+handles scalar numeric members, one-to-one and one-to-many relations, and
+vector members. The generated adapters are build outputs, not model-specific
+source files in the main codebase.
+
+EDM4hep's installed schema is selected automatically when available. To build
+against additional local datamodels, pass their YAML schemas at configure time
+and link their generated libraries in CMake:
+
+```bash
+cmake -S . -B build \
+  -DTIMEFRAME_BUILDER_DATAMODEL_YAMLS="/path/to/edm4hep.yaml;/path/to/custom.yaml" \
+  -DTIMEFRAME_BUILDER_DATAMODEL_PACKAGES=CustomModel \
+  -DTIMEFRAME_BUILDER_DATAMODEL_LIBRARIES="CustomModel::core;CustomModel::dict"
+```
+
+The list must include the schemas corresponding to datamodels used by the
+merger; linking a model library alone does not expose its schema to CMake.
+Use the package and target names exported by the local datamodel installation.
+
+Beam attachment uses the configured `beam_vertex_collection` (default
+`MCParticles`) and a generated accessor for a datatype with numeric
+`generatorStatus` plus an x/y/z `vertex` component. When input frames contain
+an EventHeader-like `EventHeader` collection, the handler emits one timeframe
+`EventHeader` and per-source `SubEventHeaders`, matching the legacy output
+convention.
+Frame-level GenericParameters are retained from the first contributing input
+event in each timeframe.
+
+Both extensions now write native podio ROOT frames. Legacy custom ROOT trees
+that lack podio frame metadata are not supported by this handler.
 
 ### HepMC3 Format (`.hepmc3.tree.root`)
 The output ROOT file contains:
@@ -412,151 +477,46 @@ The output ROOT file contains:
 - **Particles**: All particles with generator status offsets applied
 - **Compatibility**: Compatible with HepMC3 readers and analysis tools
 
-### Supported Collection Types
-
-#### EDM4hep Format
-The merger processes the following EDM4HEP collection types:
-- **MCParticle**: Time and generator status updates
-- **SimTrackerHit**: Time updates and particle reference mapping
-- **SimCalorimeterHit**: Time updates and contribution processing
-- **CaloHitContribution**: Time updates with proper particle references
-
 #### HepMC3 Format
 The merger processes HepMC3 GenEvent objects:
 - **GenVertex**: Time offsets applied to vertex positions
 - **GenParticle**: Generator status offsets applied to particles
 - **Event Structure**: Preserved particle-vertex relationships
 
-## Technical Implementation
+## Architecture
 
-### Architecture Overview
+[`EventMerger`](core/src/EventMerger.cc) schedules events according to the
+supplied configuration. The abstract [`DataHandler`](core/include/DataHandler.h) owns the
+format-specific input and output workflow:
 
-The application has been recently refactored from a Podio Frame-based approach to a more efficient vector-based ROOT processing system:
+- [`PodioDataHandler`](podio/include/PodioDataHandler.h) reads and writes native
+  Podio ROOT frames using collection buffers. Its typed adapters are generated
+  at build time from the selected datamodel YAML schemas.
+- [`HepMC3DataHandler`](hepmc3/include/HepMC3DataHandler.h) handles HepMC3 ROOT-tree
+  input and output when HepMC3 is available at build time.
+- [`DataSource`](core/include/DataSource.h) provides shared source state and timing
+  behavior; concrete sources implement format-specific input.
 
-- **Direct ROOT I/O**: Uses ROOT TChain/TTree directly instead of Podio Frame readers
-- **Vector-Based Processing**: Works with `std::vector<edm4hep::*Data>` types directly
-- **Object-Oriented Design**: Clean separation between data sources and merged collections
-- **Memory Efficient**: Streams data without loading entire files into memory
+The output filename selects the handler. Inputs used in a run must be
+compatible with that handler.
 
-### Core Components
+## Testing
 
-#### DataSource Class
-Encapsulates input file management and data reading:
-- Handles multiple input files through ROOT TChain
-- Manages branch pointers for different collection types
-- Provides event processing and time offset calculation methods
+Build the project and run its registered tests:
 
-#### MergedCollections Structure  
-Organizes all merged output data:
-- Event and particle collections (MCParticle, EventHeader)
-- Hit collections (SimTrackerHit, SimCalorimeterHit, CaloHitContribution)
-- Reference collections maintaining object relationships
-- Global parameter (GP) branches for metadata
-
-#### TimeframeBuilder
-Main orchestration class:
-- Initializes and manages multiple DataSource instances
-- Coordinates timeframe generation and event merging
-- Handles output file creation and metadata preservation
-
-### Time Offset Generation
-1. **Random Distribution**: Uniform random offsets within timeframe duration
-2. **Bunch Crossing**: Optional discretization to bunch boundaries
-3. **Beam Physics**: Time-of-flight corrections for realistic timing
-
-### Particle Reference Mapping
-- Maintains proper relationships between particles and detector hits
-- Updates all cross-references when merging events
-- Preserves parent-daughter relationships in particle hierarchies
-
-### Memory Management
-- Efficient streaming of large files without loading entire datasets
-- Automatic cleanup of temporary objects
-- Optimized for processing large-scale simulation outputs
-
-## Error Handling
-
-### Common Issues and Solutions
-
-#### Missing Collections
-- **Behavior**: Gracefully skips missing optional collections
-- **Logging**: Reports which collections were not found
-- **Impact**: Processing continues with available data
-
-#### File Access Errors
-- **Detection**: Automatic validation of input/output file accessibility
-- **Reporting**: Clear error messages with file paths
-- **Recovery**: Fails fast with descriptive error information
-
-#### Invalid Parameters
-- **Validation**: Command line arguments checked at startup
-- **Examples**: Negative durations, invalid file paths
-- **Response**: Helpful error messages with correct usage examples
-
-#### Memory Issues
-- **Large Files**: Automatic detection of memory constraints
-- **Streaming**: Uses ROOT streaming for memory-efficient processing
-- **Monitoring**: Use system tools like `htop` or `top` for resource monitoring
-
-## Performance Considerations
-
-### File Size Scaling
-- **Input**: Linear scaling with number of input events
-- **Output**: Depends on timeframe duration and event rate
-- **Memory**: Constant memory usage regardless of file size
-
-### Processing Speed
-- **Typical Rate**: 1000-10000 events/second depending on complexity
-- **Bottlenecks**: I/O operations and random number generation
-- **Optimization**: Use SSDs and optimize bunch crossing parameters
-
-## Troubleshooting
-
-### Build Issues
-1. **Missing Dependencies**: Ensure PODIO and EDM4HEP are installed and findable
-2. **Compiler Errors**: Verify C++20 support in your compiler
-3. **CMake Issues**: Check CMake version (3.16+ required)
-
-### Runtime Issues
-1. **File Not Found**: Verify input file paths and permissions
-2. **Segmentation Faults**: Check input file format compatibility
-3. **Memory Errors**: Reduce batch size or enable streaming mode
-
-### Performance Issues
-1. **Slow Processing**: Check disk I/O speeds and file system type
-2. **Memory Usage**: Monitor with system tools (htop, top)
-3. **Output Size**: Verify timeframe parameters are reasonable
-
-## Development and Contributing
-
-### Code Structure
-- `src/TimeframeBuilder.cc`: Core merging logic and orchestration
-- `src/DataSource.cc`: Input file management and data reading  
-- `src/timeframe_builder_main.cc`: Command line interface and configuration parsing
-- `include/TimeframeBuilder.h`: Main API and data structures
-- `include/DataSource.h`: Input data source abstraction
-- `include/MergerConfig.h`: Configuration structures
-
-### Testing
 ```bash
-# Build the project
-./build.sh
-
-# Run basic configuration tests
-./install/bin/test_standalone
-
-# Test with sample data
-./install/bin/timeframe_builder --config configs/config.yml
+./make.sh
+ctest --test-dir build --output-on-failure
 ```
+
+The CTest suite covers event-plugin source selection, record field transforms,
+and numeric range checks. It does not yet cover full Podio buffer merging or
+HepMC3 file I/O.
 
 ### Configuration Files
 Example configuration files are provided in the `configs/` directory:
 - `config.yml`: Basic multi-source configuration
 - `config_continue.yml`: Working with pre-merged timeframe files
-
-## License
-
-This software is provided under the terms specified in the LICENSE file found in the top-level directory.
 
 ## Support
 

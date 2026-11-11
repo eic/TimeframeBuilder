@@ -110,6 +110,7 @@ jobs:
         run: |
           # EDM4hep smoke test using built binary
           ./install/bin/timeframe_builder --config configs/config_ci.yml \
+            --transform-config configs/timeframe_builder/podio_transformations.yml \
             --output merged_ci_18x275.edm4hep.root \
             --source:signal:input_files epic_sim_ci_signal.edm4hep.root \
             --source:minbias:input_files epic_sim_ci_minbias.edm4hep.root \
@@ -157,6 +158,7 @@ jobs:
         run: |
           # HepMC3 smoke test using built binary
           ./install/bin/timeframe_builder --config configs/config_ci.yml \
+            --transform-config configs/timeframe_builder/hepmc3_transformations.yml \
             --output merged_ci_18x275.hepmc3.tree.root \
             --source:signal:input_files ${{env.XROOTD_SERVER}}${{env.HEPMC3_PATH}}${{env.HEPMC3_SIGNAL_PATH}} \
             --source:minbias:input_files ${{env.XROOTD_SERVER}}${{env.HEPMC3_PATH}}${{env.HEPMC3_MINBIAS_PATH}} \

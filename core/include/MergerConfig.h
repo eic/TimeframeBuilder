@@ -1,7 +1,27 @@
 #pragma once
 
 #include <string>
+#include <unordered_map>
 #include <vector>
+
+struct EventTransformRule {
+    std::string plugin;
+    std::vector<std::string> sources{"all"};
+    std::unordered_map<std::string, std::string> parameters;
+};
+
+struct RecordTransformRule {
+    std::string plugin;
+    std::string datatype{"all"};
+    std::string collection{"all"};
+    std::string field;
+    std::unordered_map<std::string, std::string> parameters;
+};
+
+struct TransformationConfig {
+    std::vector<EventTransformRule> event_transformations;
+    std::vector<RecordTransformRule> record_transformations;
+};
 
 
 struct SourceConfig {
@@ -20,6 +40,7 @@ struct SourceConfig {
 
     // Beam background config, beam direction and speed
     bool   attach_to_beam{false};
+    std::string beam_vertex_collection{"MCParticles"};
     float  beam_angle{0.0f};
     float  beam_speed{299.792458f}; //Speed of light in mm/ns
     float  beam_spread{0.0f};
@@ -34,7 +55,6 @@ struct SourceConfig {
 };
 
 struct MergerConfig {
-    bool   introduce_offsets{true};
     float  timeframe_duration{2000.0f};
     float  bunch_crossing_period{10.0f};
     unsigned int random_seed{0};  // 0 means use random_device
@@ -45,5 +65,9 @@ struct MergerConfig {
     // Input/output configuration
     std::string output_file{"merged_timeframes.edm4hep.root"};
     size_t max_events{100};
-    bool   merge_particles{false};
+};
+
+struct TimeframeBuilderConfig {
+    MergerConfig merger;
+    TransformationConfig transformations;
 };

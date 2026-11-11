@@ -2,6 +2,7 @@
 
 #include "DataSource.h"
 #include "MergerConfig.h"
+#include "ParameterTransforms.h"
 #include <vector>
 #include <string>
 #include <memory>
@@ -34,7 +35,10 @@ public:
      * Initialize output file and prepare for writing merged timeframes
      * @param config Merger configuration
      */
-    virtual void initializeOutput(const MergerConfig& config, const std::vector<std::unique_ptr<DataSource>>& data_sources) = 0;
+    virtual void initializeOutput(
+        const MergerConfig& config,
+        const TransformationConfig& transformations,
+        const std::vector<std::unique_ptr<DataSource>>& data_sources) = 0;
 
     /**
      * Prepare for a new timeframe (clear buffers, etc.)
@@ -74,11 +78,14 @@ protected:
     /**
      * Process a single loaded event during merging
      * Implemented by concrete handlers for format-specific logic
-     * Called after loadEvent and UpdateTimeOffset have been applied
+     * Called after loadEvent and event transformations have been applied
      */
     virtual void processEvent(DataSource& source) = 0;
     
     size_t current_timeframe_number_ = 0;
+    std::vector<EventTransformRule> event_transform_rules_;
+    std::vector<RecordTransformRule> record_transform_rules_;
+    EventTransformContext current_event_transform_context_;
 
 public:
     /**

@@ -14,10 +14,10 @@ public:
      * Parse command-line arguments and optional YAML configuration file
      * @param argc Number of command-line arguments
      * @param argv Command-line arguments array
-     * @return Populated MergerConfig structure
+     * @return Populated run and transformation configurations
      * @throws std::runtime_error if required parameters are missing
      */
-    static MergerConfig parse(int argc, char* argv[]);
+    static TimeframeBuilderConfig parse(int argc, char* argv[]);
 
 private:
     /**
@@ -72,6 +72,12 @@ private:
     static void loadYAMLConfig(const std::string& config_file, MergerConfig& config);
 
     /**
+     * Load application-level plugin bindings from a transformation profile
+     */
+    static void loadTransformationYAMLConfig(
+        const std::string& config_file, TransformationConfig& config);
+
+    /**
      * Merge CLI-specified sources with YAML-loaded sources
      * CLI sources can override YAML sources with the same name
      * @param config MergerConfig to merge into
@@ -86,6 +92,9 @@ private:
      * @throws std::runtime_error if no valid sources remain
      */
     static void validateConfiguration(MergerConfig& config);
+
+    static void validateTransformationConfiguration(
+        const TransformationConfig& config);
 
     /**
      * Print the parsed configuration to console

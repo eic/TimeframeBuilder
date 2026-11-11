@@ -1,6 +1,105 @@
 #include "HepMC3DataHandler.h"
+#include "ParameterTransforms.h"
 #include <iostream>
 #include <stdexcept>
+
+namespace {
+
+void registerHepMC3RecordFields() {
+    static const bool registered = [] {
+        auto& transforms = RecordTransformRegistry::instance();
+        transforms.registerFieldAccessor(
+            "HepMC3::GenParticle", "status", [](void* record) {
+                auto* particle = static_cast<HepMC3::GenParticle*>(record);
+                return NumericFieldAccessor{
+                    [particle] {
+                        return static_cast<double>(particle->status());
+                    },
+                    [particle](double value) {
+                        particle->set_status(checkedNumericCast<int>(value));
+                    }};
+            });
+        transforms.registerFieldAccessor(
+            "HepMC3::GenParticle", "pid", [](void* record) {
+                auto* particle = static_cast<HepMC3::GenParticle*>(record);
+                return NumericFieldAccessor{
+                    [particle] { return static_cast<double>(particle->pid()); },
+                    [particle](double value) {
+                        particle->set_pid(checkedNumericCast<int>(value));
+                    }};
+            });
+        transforms.registerFieldAccessor(
+            "HepMC3::GenParticle", "generated_mass", [](void* record) {
+                auto* particle = static_cast<HepMC3::GenParticle*>(record);
+                return NumericFieldAccessor{
+                    [particle] {
+                        return static_cast<double>(particle->generated_mass());
+                    },
+                    [particle](double value) {
+                        particle->set_generated_mass(
+                            checkedNumericCast<double>(value));
+                    }};
+            });
+        for (const std::string component : {"px", "py", "pz", "e"}) {
+            transforms.registerFieldAccessor(
+                "HepMC3::GenParticle", "momentum." + component,
+                [component](void* record) {
+                    auto* particle = static_cast<HepMC3::GenParticle*>(record);
+                    return NumericFieldAccessor{
+                        [particle, component] {
+                            const auto momentum = particle->momentum();
+                            if (component == "px") return momentum.px();
+                            if (component == "py") return momentum.py();
+                            if (component == "pz") return momentum.pz();
+                            return momentum.e();
+                        },
+                        [particle, component](double value) {
+                            auto momentum = particle->momentum();
+                            if (component == "px")
+                                momentum.set_px(checkedNumericCast<double>(value));
+                            if (component == "py")
+                                momentum.set_py(checkedNumericCast<double>(value));
+                            if (component == "pz")
+                                momentum.set_pz(checkedNumericCast<double>(value));
+                            if (component == "e")
+                                momentum.set_e(checkedNumericCast<double>(value));
+                            particle->set_momentum(momentum);
+                        }};
+                });
+        }
+        for (const std::string component : {"x", "y", "z", "t"}) {
+            transforms.registerFieldAccessor(
+                "HepMC3::GenVertex", "position." + component,
+                [component](void* record) {
+                    auto* vertex = static_cast<HepMC3::GenVertex*>(record);
+                    return NumericFieldAccessor{
+                        [vertex, component] {
+                            const auto position = vertex->position();
+                            if (component == "x") return position.x();
+                            if (component == "y") return position.y();
+                            if (component == "z") return position.z();
+                            return position.t();
+                        },
+                        [vertex, component](double value) {
+                            auto position = vertex->position();
+                            if (component == "x")
+                                position.set_x(checkedNumericCast<double>(value));
+                            if (component == "y")
+                                position.set_y(checkedNumericCast<double>(value));
+                            if (component == "z")
+                                position.set_z(checkedNumericCast<double>(value));
+                            if (component == "t")
+                                position.set_t(checkedNumericCast<double>(value));
+                            vertex->set_position(position);
+                        }};
+                });
+        }
+        return true;
+    }();
+    (void)registered;
+}
+
+} // namespace
 
 std::vector<std::unique_ptr<DataSource>> HepMC3DataHandler::initializeDataSources(
     const std::string& filename,
@@ -53,7 +152,16 @@ std::vector<std::unique_ptr<DataSource>> HepMC3DataHandler::initializeDataSource
     return data_sources;
 }
 
-void HepMC3DataHandler::initializeOutput(const MergerConfig& config, const std::vector<std::unique_ptr<DataSource>>& data_sources) {
+void HepMC3DataHandler::initializeOutput(
+    const MergerConfig& config,
+    const TransformationConfig& transformations,
+    const std::vector<std::unique_ptr<DataSource>>& data_sources) {
+    event_transform_rules_ = transformations.event_transformations;
+    record_transform_rules_ = transformations.record_transformations;
+    registerHepMC3RecordFields();
+    EventTransformRegistry::instance().validateRules(event_transform_rules_);
+    RecordTransformRegistry::instance().validateRules(record_transform_rules_);
+
     // Configure metadata and create writer
     auto runInfo = configureMetadata(config);
     writer_ = std::make_shared<HepMC3::WriterRootTree>(config.output_file, runInfo);
@@ -113,31 +221,25 @@ void HepMC3DataHandler::processEvent(DataSource& source) {
     }
     
     const auto& config = source.getConfig();
-    double time_offset_ns = source.getCurrentTimeOffset();
-    
     // Get the current event from the HepMC3 source
     const auto& event = hepmc3_source->getCurrentEvent();
     
     // Insert the event into the merged timeframe
-    insertHepMC3Event(event, current_timeframe_, time_offset_ns, config.generator_status_offset, config.keep_weight);
+    insertHepMC3Event(event, current_timeframe_, config.keep_weight);
 }
 
 long HepMC3DataHandler::insertHepMC3Event(const HepMC3::GenEvent& inevt,
                                             std::unique_ptr<HepMC3::GenEvent>& hepframe,
-                                            double time,
-                                            int baseStatus,
                                             bool keepWeights) {
-    // Convert time in nanoseconds to HepMC position units (mm)
-    double timeHepmc = c_light * time;
-    
     std::vector<HepMC3::GenParticlePtr> particles;
     std::vector<HepMC3::GenVertexPtr> vertices;
 
-    // Copy vertices with time offset applied
+    // Copy vertices and apply configured record transformations.
     for (const auto& vertex : inevt.vertices()) {
-        HepMC3::FourVector position = vertex->position();
-        position.set_t(position.t() + timeHepmc);
-        auto v1 = std::make_shared<HepMC3::GenVertex>(position);
+        auto v1 = std::make_shared<HepMC3::GenVertex>(vertex->position());
+        RecordTransformRegistry::instance().apply(
+            "HepMC3::GenVertex", "vertices", v1.get(),
+            record_transform_rules_, current_event_transform_context_);
         vertices.push_back(v1);
     }
     
@@ -148,9 +250,11 @@ long HepMC3DataHandler::insertHepMC3Event(const HepMC3::GenEvent& inevt,
         int status = particle->status();
         if (status == 1) finalParticleCount++;
         int pid = particle->pid();
-        status += baseStatus;
         auto p1 = std::make_shared<HepMC3::GenParticle>(momentum, pid, status);
         p1->set_generated_mass(particle->generated_mass());
+        RecordTransformRegistry::instance().apply(
+            "HepMC3::GenParticle", "particles", p1.get(),
+            record_transform_rules_, current_event_transform_context_);
         particles.push_back(p1);
         
         // Attach particle to production vertex with bounds checking

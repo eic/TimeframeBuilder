@@ -3,7 +3,6 @@ output_file: merged_timeframes2.root
 max_events: 100
 timeframe_duration: 200.0
 bunch_crossing_period: 10.0
-introduce_offsets: true
 sources:
   - input_files:
       - merged_timeframes.root

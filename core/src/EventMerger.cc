@@ -1,32 +1,34 @@
-#include "TimeframeBuilder.h"
+#include "EventMerger.h"
 
 #include <iostream>
 #include <stdexcept>
 #include <chrono>
+#include <utility>
 
-TimeframeBuilder::TimeframeBuilder(const MergerConfig& config)
-    : m_config(config), gen(config.random_seed == 0 ? rd() : config.random_seed) {}
-
-void TimeframeBuilder::setDataHandler(std::unique_ptr<DataHandler> handler) {
-    data_handler_ = std::move(handler);
+EventMerger::EventMerger(MergerConfig config,
+                         TransformationConfig transformations,
+                         std::unique_ptr<DataHandler> data_handler)
+    : m_config(std::move(config)),
+      transformations_(std::move(transformations)),
+      gen(m_config.random_seed == 0 ? rd() : m_config.random_seed),
+      data_handler_(std::move(data_handler)) {
+    if (!data_handler_) {
+        throw std::invalid_argument("EventMerger requires a data handler");
+    }
 }
 
-void TimeframeBuilder::run() {
+void EventMerger::run() {
     std::cout << "Starting timeframe builder..." << std::endl;
     std::cout << "Sources: " << m_config.sources.size() << std::endl;
     std::cout << "Output file: " << m_config.output_file << std::endl;
     std::cout << "Max events: " << m_config.max_events << std::endl;
     std::cout << "Timeframe duration: " << m_config.timeframe_duration << std::endl;
 
-    if (!data_handler_) {
-        throw std::runtime_error("No data handler set - call setDataHandler() before run()");
-    }
-
     // Initialize data sources via the data handler
     // The data handler creates appropriate data sources for its format
     data_sources_ = data_handler_->initializeDataSources(m_config.output_file, m_config.sources);
 
-    data_handler_->initializeOutput(m_config, data_sources_);
+    data_handler_->initializeOutput(m_config, transformations_, data_sources_);
 
     std::cout << "Processing " << m_config.max_events << " timeframes..." << std::endl;
 
@@ -73,7 +75,7 @@ void TimeframeBuilder::run() {
     std::cout << "Output saved to: " << m_config.output_file << std::endl;
 }
 
-bool TimeframeBuilder::updateInputNEvents(std::vector<std::unique_ptr<DataSource>>& sources) {
+bool EventMerger::updateInputNEvents(std::vector<std::unique_ptr<DataSource>>& sources) {
     for (auto& data_source : sources) {
         const auto& config = data_source->getConfig();
 

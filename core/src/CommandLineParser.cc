@@ -6,14 +6,61 @@
 #include <cctype>
 #include <getopt.h>
 #include <glob.h>
+#include <unordered_map>
+#include <utility>
+
+namespace {
+
+std::unordered_map<std::string, std::string> parseTransformParameters(
+    const YAML::Node& parameters, const std::string& transformation) {
+    std::unordered_map<std::string, std::string> result;
+    if (!parameters) {
+        return result;
+    }
+    if (!parameters.IsMap()) {
+        throw std::runtime_error("Parameters for " + transformation +
+                                 " must be a mapping");
+    }
+    for (const auto& parameter : parameters) {
+        if (!parameter.first.IsScalar() || !parameter.second.IsScalar()) {
+            throw std::runtime_error("Transform parameters must be scalar "
+                                     "key/value pairs");
+        }
+        result.emplace(parameter.first.as<std::string>(),
+                       parameter.second.as<std::string>());
+    }
+    return result;
+}
+
+std::vector<std::string> parseSelectors(const YAML::Node& selectors,
+                                        const std::string& selector_name) {
+    if (!selectors) {
+        return {"all"};
+    }
+    if (selectors.IsScalar()) {
+        return {selectors.as<std::string>()};
+    }
+    if (!selectors.IsSequence()) {
+        throw std::runtime_error("'" + selector_name +
+                                 "' must be a scalar or sequence");
+    }
+    std::vector<std::string> result;
+    for (const auto& selector : selectors) {
+        result.push_back(selector.as<std::string>());
+    }
+    return result;
+}
+
+} // namespace
 
 void CommandLineParser::printUsage(const char* program_name) {
     std::cout << "Usage: " << program_name << " [options] input_file1 [input_file2 ...]\n"
               << "\nGeneral Options:\n"
               << "  --config FILE                YAML config file\n"
+              << "  --transform-config FILE      Application plugin transformation profile\n"
               << "  -o, --output FILE           Output file name (default: merged_timeframes.edm4hep.root)\n"
               << "  -n, --nevents N             Maximum number of timeframes to generate (default: 100)\n"
-              << "  -d, --duration TIME         Timeframe duration in ns (default: 20.0)\n"
+              << "  -d, --duration TIME         Timeframe duration in ns (default: 2000.0)\n"
               << "  -p, --bunch-period PERIOD   Bunch crossing period in ns (default: 10.0)\n"
               << "  --random-seed SEED          Random number generator seed (default: 0, use random_device)\n"
               << "  -h, --help                  Show this help message\n"
@@ -45,6 +92,8 @@ void CommandLineParser::printUsage(const char* program_name) {
               << "                              Enable beam attachment (true/false)\n"
               << "  --source:NAME:beam_speed SPEED\n"
               << "                              Beam speed in mm/ns\n"
+              << "  --source:NAME:beam_vertex_collection NAME\n"
+              << "                              Collection used to find beam vertex\n"
               << "  --source:NAME:beam_spread SPREAD\n"
               << "                              Beam spread for Gaussian smearing\n"
               << "  --source:NAME:status_offset OFFSET\n"
@@ -165,6 +214,8 @@ bool CommandLineParser::handleSourceOption(std::vector<SourceConfig>& sources, c
         source->attach_to_beam = parseBool(value);
     } else if (property == "beam_speed") {
         source->beam_speed = std::stof(value);
+    } else if (property == "beam_vertex_collection") {
+        source->beam_vertex_collection = value;
     } else if (property == "beam_spread") {
         source->beam_spread = std::stof(value);
     } else if (property == "status_offset") {
@@ -189,13 +240,17 @@ bool CommandLineParser::handleSourceOption(std::vector<SourceConfig>& sources, c
 
 void CommandLineParser::loadYAMLConfig(const std::string& config_file, MergerConfig& config) {
     YAML::Node yaml = YAML::LoadFile(config_file);
+    if (yaml["event_transformations"] || yaml["record_transformations"]) {
+        throw std::runtime_error(
+            "Transformation rules belong in a separate file passed with "
+            "--transform-config, not in the run configuration");
+    }
     if (yaml["output_file"]) config.output_file = yaml["output_file"].as<std::string>();
     if (yaml["max_events"]) config.max_events = yaml["max_events"].as<size_t>();
     if (yaml["timeframe_duration"]) config.timeframe_duration = yaml["timeframe_duration"].as<float>();
     if (yaml["bunch_crossing_period"]) config.bunch_crossing_period = yaml["bunch_crossing_period"].as<float>();
     if (yaml["random_seed"]) config.random_seed = yaml["random_seed"].as<unsigned int>();
-    if (yaml["introduce_offsets"]) config.introduce_offsets = yaml["introduce_offsets"].as<bool>();
-    
+
     if (yaml["sources"]) {
         config.sources.clear();
         for (const auto& source_yaml : yaml["sources"]) {
@@ -216,11 +271,51 @@ void CommandLineParser::loadYAMLConfig(const std::string& config_file, MergerCon
             if (source_yaml["attach_to_beam"]) source.attach_to_beam = source_yaml["attach_to_beam"].as<bool>();
             if (source_yaml["beam_angle"]) source.beam_angle = source_yaml["beam_angle"].as<float>();
             if (source_yaml["beam_speed"]) source.beam_speed = source_yaml["beam_speed"].as<float>();
+            if (source_yaml["beam_vertex_collection"]) source.beam_vertex_collection = source_yaml["beam_vertex_collection"].as<std::string>();
             if (source_yaml["beam_spread"]) source.beam_spread = source_yaml["beam_spread"].as<float>();
             if (source_yaml["generator_status_offset"]) source.generator_status_offset = source_yaml["generator_status_offset"].as<int32_t>();
             if (source_yaml["keep_weight"]) source.keep_weight = source_yaml["keep_weight"].as<bool>();
             if (source_yaml["repeat_on_eof"]) source.repeat_on_eof = source_yaml["repeat_on_eof"].as<bool>();
             config.sources.push_back(source);
+        }
+    }
+}
+
+void CommandLineParser::loadTransformationYAMLConfig(
+    const std::string& config_file, TransformationConfig& config) {
+    const auto yaml = YAML::LoadFile(config_file);
+
+    if (yaml["event_transformations"]) {
+        for (const auto& transform_yaml : yaml["event_transformations"]) {
+            if (!transform_yaml["plugin"]) {
+                throw std::runtime_error(
+                    "Each event transformation requires a 'plugin' field");
+            }
+            EventTransformRule rule;
+            rule.plugin = transform_yaml["plugin"].as<std::string>();
+            rule.sources = parseSelectors(transform_yaml["sources"], "sources");
+            rule.parameters = parseTransformParameters(
+                transform_yaml["parameters"], "event transformation");
+            config.event_transformations.push_back(std::move(rule));
+        }
+    }
+
+    if (yaml["record_transformations"]) {
+        for (const auto& transform_yaml : yaml["record_transformations"]) {
+            if (!transform_yaml["plugin"] || !transform_yaml["datatype"] ||
+                !transform_yaml["collection"] || !transform_yaml["field"]) {
+                throw std::runtime_error(
+                    "Each record transformation requires 'plugin', "
+                    "'datatype', 'collection', and 'field' fields");
+            }
+            RecordTransformRule rule;
+            rule.plugin = transform_yaml["plugin"].as<std::string>();
+            rule.datatype = transform_yaml["datatype"].as<std::string>();
+            rule.collection = transform_yaml["collection"].as<std::string>();
+            rule.field = transform_yaml["field"].as<std::string>();
+            rule.parameters = parseTransformParameters(
+                transform_yaml["parameters"], "record transformation");
+            config.record_transformations.push_back(std::move(rule));
         }
     }
 }
@@ -253,6 +348,10 @@ void CommandLineParser::mergeCliSources(MergerConfig& config, const std::vector<
                 if (cli_source.beam_speed != 299.792458f) {
                     existing_source.beam_speed = cli_source.beam_speed;
                 }
+                if (cli_source.beam_vertex_collection != "MCParticles") {
+                    existing_source.beam_vertex_collection =
+                        cli_source.beam_vertex_collection;
+                }
                 if (cli_source.beam_spread != 0.0f) {
                     existing_source.beam_spread = cli_source.beam_spread;
                 }
@@ -284,6 +383,21 @@ void CommandLineParser::mergeCliSources(MergerConfig& config, const std::vector<
         if (!found) {
             // Add new CLI source
             config.sources.push_back(cli_source);
+        }
+    }
+}
+
+void CommandLineParser::validateTransformationConfiguration(
+    const TransformationConfig& config) {
+    for (const auto& rule : config.event_transformations) {
+        if (rule.plugin.empty() || rule.sources.empty()) {
+            throw std::runtime_error("Invalid event transformation rule");
+        }
+    }
+    for (const auto& rule : config.record_transformations) {
+        if (rule.plugin.empty() || rule.datatype.empty() ||
+            rule.collection.empty() || rule.field.empty()) {
+            throw std::runtime_error("Invalid record transformation rule");
         }
     }
 }
@@ -324,6 +438,7 @@ void CommandLineParser::printConfiguration(const MergerConfig& config) {
         std::cout << "  Use bunch crossing: " << (source.use_bunch_crossing ? "true" : "false") << std::endl;
         std::cout << "  Beam attachment: " << (source.attach_to_beam ? "true" : "false") << std::endl;
         std::cout << "  Beam speed: " << source.beam_speed << " mm/ns" << std::endl;
+        std::cout << "  Beam vertex collection: " << source.beam_vertex_collection << std::endl;
         std::cout << "  Beam spread: " << source.beam_spread << std::endl;
         std::cout << "  Generator status offset: " << source.generator_status_offset << std::endl;
         std::cout << "  Keep weight: " << (source.keep_weight ? "true" : "false") << std::endl;
@@ -334,14 +449,15 @@ void CommandLineParser::printConfiguration(const MergerConfig& config) {
     std::cout << "Timeframe duration: " << config.timeframe_duration << " ns" << std::endl;
     std::cout << "Bunch crossing period: " << config.bunch_crossing_period << " ns" << std::endl;
     std::cout << "Random seed: " << config.random_seed << (config.random_seed == 0 ? " (using random_device)" : "") << std::endl;
-    std::cout << "Introduce offsets: " << (config.introduce_offsets ? "true" : "false") << std::endl;
     std::cout << "================================================" << std::endl;
 }
 
-MergerConfig CommandLineParser::parse(int argc, char* argv[]) {
-    MergerConfig config;
+TimeframeBuilderConfig CommandLineParser::parse(int argc, char* argv[]) {
+    TimeframeBuilderConfig app_config;
+    MergerConfig& config = app_config.merger;
     SourceConfig default_source; // Default source config
     std::string config_file = "";
+    std::string transformation_config_file = "";
     std::vector<SourceConfig> cli_sources; // Sources defined via CLI
     
     // First pass: extract source-specific options and process them separately
@@ -377,6 +493,7 @@ MergerConfig CommandLineParser::parse(int argc, char* argv[]) {
     
     static struct option long_options[] = {
         {"config", required_argument, 0, 1004},
+        {"transform-config", required_argument, 0, 1007},
         {"output", required_argument, 0, 'o'},
         {"nevents", required_argument, 0, 'n'},
         {"duration", required_argument, 0, 'd'},
@@ -403,6 +520,9 @@ MergerConfig CommandLineParser::parse(int argc, char* argv[]) {
         switch (opt) {
             case 1004:
                 config_file = optarg;
+                break;
+            case 1007:
+                transformation_config_file = optarg;
                 break;
             case 'o':
                 config.output_file = optarg;
@@ -462,6 +582,10 @@ MergerConfig CommandLineParser::parse(int argc, char* argv[]) {
     if (!config_file.empty()) {
         loadYAMLConfig(config_file, config);
     }
+    if (!transformation_config_file.empty()) {
+        loadTransformationYAMLConfig(transformation_config_file,
+                                      app_config.transformations);
+    }
     
     // Merge CLI sources with existing config sources
     mergeCliSources(config, cli_sources);
@@ -478,9 +602,10 @@ MergerConfig CommandLineParser::parse(int argc, char* argv[]) {
     
     // Validate configuration
     validateConfiguration(config);
+    validateTransformationConfiguration(app_config.transformations);
     
     // Print configuration
     printConfiguration(config);
     
-    return config;
+    return app_config;
 }

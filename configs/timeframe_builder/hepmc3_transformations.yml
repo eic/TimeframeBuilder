@@ -1,0 +1,17 @@
+event_transformations:
+  - plugin: source_time_offset
+
+record_transformations:
+  - plugin: add_context_value
+    datatype: HepMC3::GenVertex
+    collection: vertices
+    field: position.t
+    parameters:
+      context: time_offset
+      scale: 299.792458
+  - plugin: add_context_value
+    datatype: HepMC3::GenParticle
+    collection: particles
+    field: status
+    parameters:
+      context: generator_status_offset

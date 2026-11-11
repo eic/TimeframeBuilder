@@ -1,10 +1,10 @@
 #pragma once
 
 #include "MergerConfig.h"
+#include <array>
 #include <memory>
 #include <vector>
 #include <string>
-#include <random>
 
 /**
  * @class DataSource
@@ -16,6 +16,12 @@
  */
 class DataSource {
 public:
+    struct VertexPosition {
+        float x = 0.0f;
+        float y = 0.0f;
+        float z = 0.0f;
+    };
+
     virtual ~DataSource() = default;
     
     // Initialization - optional for formats that don't need collection names
@@ -30,17 +36,15 @@ public:
     size_t getTotalEntries() const { return total_entries_; }
     size_t getCurrentEntryIndex() const { return current_entry_index_; }
     void setCurrentEntryIndex(size_t index) { current_entry_index_ = index; }
-    float getCurrentTimeOffset() const { return current_time_offset_; }
+    VertexPosition beamVertexPosition() const;
 
     // Event management
     void setEntriesNeeded(size_t entries) { entries_needed_ = entries; }
     size_t getEntriesNeeded() const { return entries_needed_; }
     virtual bool loadNextEvent() = 0;
     
-    // Event loading and time offset update
+    // Event loading
     virtual void loadEvent(size_t event_index) = 0;
-    void UpdateTimeOffset(float timeframe_duration, float bunch_crossing_period, 
-                         std::mt19937& rng);
     
     // Configuration access
     const SourceConfig& getConfig() const { return *config_; }
@@ -64,23 +68,6 @@ protected:
     size_t current_entry_index_ = 0;
     size_t entries_needed_ = 0;
     
-    // Time offset state (shared across implementations)
-    float current_time_offset_ = 0.0f;
-    
-    // Structure to hold vertex position
-    struct VertexPosition {
-        float x = 0.0f;
-        float y = 0.0f;
-        float z = 0.0f;
-    };
-    
-    // Format-specific vertex extraction (must be implemented by derived classes)
+    // Format-specific vertex extraction used by event transformation plugins.
     virtual VertexPosition getBeamVertexPosition() const = 0;
-    
-    // Shared beam distance calculation using vertex and beam angle
-    float calculateBeamDistance() const;
-    
-    // Shared time offset generation logic
-    float generateTimeOffset(float distance, float timeframe_duration, 
-                            float bunch_crossing_period, std::mt19937& rng) const;
 };

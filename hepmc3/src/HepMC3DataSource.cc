@@ -117,7 +117,6 @@ void HepMC3DataSource::printStatus() const {
     std::cout << "  Total Entries: " << total_entries_ << std::endl;
     std::cout << "  Current Entry: " << current_entry_index_ << std::endl;
     std::cout << "  Entries Needed: " << entries_needed_ << std::endl;
-    std::cout << "  Current Time Offset: " << current_time_offset_ << std::endl;
 }
 
 DataSource::VertexPosition HepMC3DataSource::getBeamVertexPosition() const {

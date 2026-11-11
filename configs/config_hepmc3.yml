@@ -1,12 +1,10 @@
-# Example configuration for HepMC3 merger
-# This demonstrates how to use HepMC3 input files with the timeframe builder
+# Example HepMC3 run configuration. Application transformations are in
+# timeframe_builder/hepmc3_transformations.yml.
 
 output_file: merged_hepmc3.hepmc3.tree.root
 max_events: 100
 timeframe_duration: 2000.0  # nanoseconds
 bunch_crossing_period: 10.0
-introduce_offsets: true
-
 sources:
   - input_files:
       - input.hepmc3.tree.root

@@ -1,0 +1,16 @@
+event_transformations:
+  - plugin: source_time_offset
+
+record_transformations:
+  - plugin: add_context_value
+    datatype: all
+    collection: all
+    field: time
+    parameters:
+      context: time_offset
+  - plugin: add_context_value
+    datatype: edm4hep::MCParticle
+    collection: MCParticles
+    field: generatorStatus
+    parameters:
+      context: generator_status_offset

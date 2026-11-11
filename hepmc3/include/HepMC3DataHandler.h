@@ -27,7 +27,10 @@ public:
         const std::string& filename,
         const std::vector<SourceConfig>& source_configs) override;
 
-    void initializeOutput(const MergerConfig& config, const std::vector<std::unique_ptr<DataSource>>& data_sources) override;
+    void initializeOutput(
+        const MergerConfig& config,
+        const TransformationConfig& transformations,
+        const std::vector<std::unique_ptr<DataSource>>& data_sources) override;
 
     std::shared_ptr<HepMC3::GenRunInfo> configureMetadata(const MergerConfig& config);
     
@@ -46,17 +49,11 @@ private:
     // Store validated HepMC3 data sources (non-owning pointers)
     std::vector<HepMC3DataSource*> hepmc3_sources_;
     
-    // Speed of light constant: c = 299.792458 mm/ns
-    // Used for converting time offsets (ns) to position offsets (mm) in HepMC3
-    static constexpr double c_light = 299.792458;
-
     // Format-specific event processing
     void processEvent(DataSource& source) override;
 
     // Helper methods
     long insertHepMC3Event(const HepMC3::GenEvent& inevt,
                           std::unique_ptr<HepMC3::GenEvent>& hepframe,
-                          double time,
-                          int baseStatus,
                           bool keepWeights);
 };

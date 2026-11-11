@@ -9,23 +9,19 @@
 #include <memory>
 
 /**
- * @class TimeframeBuilder
- * @brief Core timeframe merging engine independent of data format
+ * @class EventMerger
+ * @brief Shared event-merging engine independent of data format
  * 
  * This class orchestrates the merging of events from multiple sources into timeframes.
  * It handles frequency sampling, timing relationships, and event selection, but delegates
  * the actual data I/O to a DataHandler implementation. This allows the same merging logic
  * to be used with different formats (EDM4hep, HepMC3, etc.).
  */
-class TimeframeBuilder {
+class EventMerger {
 public:
-    TimeframeBuilder(const MergerConfig& config);
-    
-    /**
-     * Set the data handler for managing input and output
-     * @param handler Unique pointer to a DataHandler implementation
-     */
-    void setDataHandler(std::unique_ptr<DataHandler> handler);
+    EventMerger(MergerConfig config,
+                TransformationConfig transformations,
+                std::unique_ptr<DataHandler> data_handler);
     
     /**
      * Run the merging process
@@ -34,6 +30,7 @@ public:
 
 private:
     MergerConfig m_config;
+    TransformationConfig transformations_;
     
     // Random number generator members
     std::random_device rd;

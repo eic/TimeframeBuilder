@@ -1,0 +1,89 @@
+# Example configuration for the standalone podio timeframe builder
+output_file: merged_timeframes.root
+max_events: 100
+timeframe_duration: 2000.0 # in ns
+bunch_crossing_period: 10.0 # in ns
+sources:
+  - name: signal
+    input_files:
+      - input3.root    
+    static_number_of_events: true
+    static_events_per_timeframe: 1
+    use_bunch_crossing: true
+    generator_status_offset: 0
+  - name: minbias
+    input_files:
+      - input3.root    
+    static_number_of_events: false
+    mean_event_frequency: 0.000129 # in GHz
+    use_bunch_crossing: true
+    generator_status_offset: 0
+    repeat_on_eof: true
+  - name: bethe_heitler
+    input_files:
+      - input3.root    
+    static_number_of_events: false
+    mean_event_frequency: 1.8 # in GHz # Check value
+    use_bunch_crossing: true
+    generator_status_offset: 0
+    repeat_on_eof: true
+  - name: hadron_beamgas
+    input_files:
+      - input3.root
+    static_number_of_events: false
+    mean_event_frequency: 0.000022 # in GHz
+    use_bunch_crossing: true
+    attach_to_beam: true
+    beam_angle: 0.025 # in rad
+    beam_speed: 299.792458 # in mm/ns
+    beam_spread: 0.030 # in ns
+    generator_status_offset: 0
+    repeat_on_eof: true
+  - name: electron_beamgas_brems
+    input_files:
+      - input3.root
+    static_number_of_events: false
+    mean_event_frequency: 0.00282638 # in GHz
+    use_bunch_crossing: true
+    attach_to_beam: true
+    beam_angle: -3.141592653589793 # in rad
+    beam_speed: 299.792458 # in mm/ns
+    beam_spread: 0.003 # in ns
+    generator_status_offset: 0
+    repeat_on_eof: true
+  - name: electron_beamgas_coulomb
+    input_files:
+      - input3.root
+    static_number_of_events: false
+    mean_event_frequency: 0.00011657 # in GHz
+    use_bunch_crossing: true
+    attach_to_beam: true
+    beam_angle: -3.141592653589793 # in rad
+    beam_speed: 299.792458 # in mm/ns
+    beam_spread: 0.003 # in ns
+    generator_status_offset: 0
+    repeat_on_eof: true
+  - name: electron_beamgas_touschek
+    input_files:
+      - input3.root
+    static_number_of_events: false
+    mean_event_frequency: 0.0011123 # in GHz
+    use_bunch_crossing: true
+    attach_to_beam: true
+    beam_angle: -3.141592653589793 # in rad
+    beam_speed: 299.792458 # in mm/ns
+    beam_spread: 0.003 # in ns
+    generator_status_offset: 0
+    repeat_on_eof: true
+  - name: electron_synchrotron
+    input_files:
+      - input3.root
+    static_number_of_events: false
+    mean_event_frequency: 36.608 # in GHz
+    use_bunch_crossing: true
+    attach_to_beam: true
+    beam_angle: -3.141592653589793 # in rad
+    beam_speed: 299.792458 # in mm/ns
+    beam_spread: 0.003 # in ns
+    generator_status_offset: 0
+    repeat_on_eof: true
