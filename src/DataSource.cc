@@ -32,7 +32,7 @@ float DataSource::generateTimeOffset(float distance, float timeframe_duration,
         // Apply beam effects if enabled
         if (config.attach_to_beam) {
             // Add time offset based on distance along beam
-            time_offset += distance / config.beam_speed + global_phase;
+            time_offset += distance / config.beam_speed;
             
             // Add Gaussian spread if specified
             if (config.beam_spread > 0.0f) {
