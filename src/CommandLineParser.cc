@@ -17,6 +17,7 @@ void CommandLineParser::printUsage(const char* program_name) {
               << "  -p, --bunch-period PERIOD   Bunch crossing period in ns (default: 10.0)\n"
               << "  -g, --global-phase          Global phase adjustment in fraction of a crossing period (default: 0.0)\n"
               << "  --random-seed SEED          Random number generator seed (default: 0, use random_device)\n"
+              << "  --reader BACKEND            Input backend: 'root' (TChain/TTree, default) or 'podio' (podio::ROOTFrameReader)\n"
               << "  --writer BACKEND            Output writer: 'root' (TTree, default)\n"
               << "  -h, --help                  Show this help message\n"
               << "  -v, --version               Show version information\n"
@@ -199,6 +200,13 @@ void CommandLineParser::loadYAMLConfig(const std::string& config_file, MergerCon
     if (yaml["random_seed"]) config.random_seed = yaml["random_seed"].as<unsigned int>();
     if (yaml["introduce_offsets"]) config.introduce_offsets = yaml["introduce_offsets"].as<bool>();
 
+    if (yaml["reader"]) {
+        config.reader = yaml["reader"].as<std::string>();
+        if (config.reader != "root" && config.reader != "podio") {
+            throw std::runtime_error("Invalid YAML 'reader' value: '" + config.reader + "'. Must be 'root' or 'podio'.");
+        }
+    }
+
     if (yaml["writer"]) {
         config.writer = yaml["writer"].as<std::string>();
         if (config.writer != "root") {
@@ -346,6 +354,7 @@ void CommandLineParser::printConfiguration(const MergerConfig& config) {
     std::cout << "Crossing global phase: " << config.global_phase << std::endl;
     std::cout << "Random seed: " << config.random_seed << (config.random_seed == 0 ? " (using random_device)" : "") << std::endl;
     std::cout << "Introduce offsets: " << (config.introduce_offsets ? "true" : "false") << std::endl;
+    std::cout << "Reader backend: " << config.reader << std::endl;
     std::cout << "Writer backend: " << config.writer << std::endl;
     std::cout << "================================================" << std::endl;
 }
@@ -404,6 +413,7 @@ MergerConfig CommandLineParser::parse(int argc, char* argv[]) {
         {"beam-spread", required_argument, 0, 1002},
         {"status-offset", required_argument, 0, 1003},
         {"keep-weight", required_argument, 0, 1006},
+        {"reader", required_argument, 0, 1007},
         {"writer", required_argument, 0, 1008},
         {"help", no_argument, 0, 'h'},
         {"version", no_argument, 0, 'v'},
@@ -459,6 +469,12 @@ MergerConfig CommandLineParser::parse(int argc, char* argv[]) {
                 break;
             case 1005:
                 config.random_seed = std::stoul(optarg);
+                break;
+            case 1007:
+                config.reader = optarg;
+                if (config.reader != "root" && config.reader != "podio") {
+                    throw std::runtime_error("Invalid --reader value: '" + config.reader + "'. Must be 'root' or 'podio'.");
+                }
                 break;
             case 1008:
                 config.writer = optarg;
