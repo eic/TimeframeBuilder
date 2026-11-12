@@ -4,6 +4,7 @@ max_events: 50
 random_seed: 1
 timeframe_duration: 2000.0 # in ns
 bunch_crossing_period: 40.0 # in ns
+global_phase: 0.5
 introduce_offsets: true
 sources:
   - name: signal

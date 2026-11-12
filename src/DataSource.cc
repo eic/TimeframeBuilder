@@ -4,6 +4,7 @@
 
 void DataSource::UpdateTimeOffset(float timeframe_duration,
                                   float bunch_crossing_period,
+                                  float global_phase,
                                   std::mt19937& rng) {
     float distance = 0.0f;
     
@@ -12,11 +13,11 @@ void DataSource::UpdateTimeOffset(float timeframe_duration,
         distance = calculateBeamDistance();
     }
     
-    current_time_offset_ = generateTimeOffset(distance, timeframe_duration, bunch_crossing_period, rng);
+    current_time_offset_ = generateTimeOffset(distance, timeframe_duration, bunch_crossing_period, global_phase, rng);
 }
 
 float DataSource::generateTimeOffset(float distance, float timeframe_duration, 
-                                     float bunch_crossing_period, std::mt19937& rng) const {
+                                     float bunch_crossing_period, float global_phase, std::mt19937& rng) const {
     const auto& config = getConfig();
     
     std::uniform_real_distribution<float> uniform(0.0f, timeframe_duration);
@@ -25,13 +26,13 @@ float DataSource::generateTimeOffset(float distance, float timeframe_duration,
     if (!config.already_merged) {
         // Apply bunch crossing if enabled
         if (config.use_bunch_crossing) {
-            time_offset = std::floor(time_offset / bunch_crossing_period) * bunch_crossing_period;
+            time_offset = std::floor(time_offset / bunch_crossing_period) * bunch_crossing_period + global_phase * bunch_crossing_period;
         }
         
         // Apply beam effects if enabled
         if (config.attach_to_beam) {
             // Add time offset based on distance along beam
-            time_offset += distance / config.beam_speed;
+            time_offset += distance / config.beam_speed + global_phase * bunch_crossing_period;
             
             // Add Gaussian spread if specified
             if (config.beam_spread > 0.0f) {

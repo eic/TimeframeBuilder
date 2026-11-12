@@ -73,6 +73,7 @@ std::shared_ptr<HepMC3::GenRunInfo> HepMC3DataHandler::configureMetadata(const M
 
     runInfo->add_attribute(metadata_prefix + "timeframe_duration_ns", std::make_shared<HepMC3::StringAttribute>(std::to_string(config.timeframe_duration)));
     runInfo->add_attribute(metadata_prefix + "bunch_crossing_period_ns", std::make_shared<HepMC3::StringAttribute>(std::to_string(config.bunch_crossing_period)));
+    runInfo->add_attribute(metadata_prefix + "global_phase", std::make_shared<HepMC3::StringAttribute>(std::to_string(config.global_phase)));
     runInfo->add_attribute(metadata_prefix + "max_events", std::make_shared<HepMC3::StringAttribute>(std::to_string(config.max_events)));
     runInfo->add_attribute(metadata_prefix + "random_seed", std::make_shared<HepMC3::StringAttribute>(std::to_string(config.random_seed)));
 

@@ -39,8 +39,8 @@ public:
     
     // Event loading and time offset update
     virtual void loadEvent(size_t event_index) = 0;
-    void UpdateTimeOffset(float timeframe_duration, float bunch_crossing_period, 
-                         std::mt19937& rng);
+    void UpdateTimeOffset(float timeframe_duration, float bunch_crossing_period,
+                         float global_phase, std::mt19937& rng);
     
     // Configuration access
     const SourceConfig& getConfig() const { return *config_; }
@@ -82,5 +82,5 @@ protected:
     
     // Shared time offset generation logic
     float generateTimeOffset(float distance, float timeframe_duration, 
-                            float bunch_crossing_period, std::mt19937& rng) const;
+                            float bunch_crossing_period, float global_phase, std::mt19937& rng) const;
 };
