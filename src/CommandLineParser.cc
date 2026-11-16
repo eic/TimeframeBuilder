@@ -14,8 +14,11 @@ void CommandLineParser::printUsage(const char* program_name) {
               << "  -o, --output FILE           Output file name (default: merged_timeframes.edm4hep.root)\n"
               << "  -n, --nevents N             Maximum number of timeframes to generate (default: 100)\n"
               << "  -d, --duration TIME         Timeframe duration in ns (default: 20.0)\n"
-              << "  -p, --bunch-period PERIOD   Bunch crossing period in ns (default: 10.0)\n"
-              << "  -g, --global-phase          Global phase adjustment in fraction of a crossing period (default: 0.0)\n"
+              << "  -p, --bunch-period PERIOD   Bunch crossing period in ns (default: 10.152)\n"
+              << "  -g, --global-phase          Global phase adjustment in fraction of a crossing period (default: 0.5)\n"
+              << "  -r, --crossings_per_rev N   Number of bunch crossings per revolution (default: 1260)"
+              << "  -a, --abort_gap N           Abort gap size in bunch crossings (default: 100)"
+              << "  -l, --filled_crossings N    Every N bunches filled (default: N=1 every crossing)"
               << "  --random-seed SEED          Random number generator seed (default: 0, use random_device)\n"
               << "  --writer BACKEND            Output writer: 'root' (TTree, default)\n"
               << "  -h, --help                  Show this help message\n"
@@ -196,6 +199,9 @@ void CommandLineParser::loadYAMLConfig(const std::string& config_file, MergerCon
     if (yaml["timeframe_duration"]) config.timeframe_duration = yaml["timeframe_duration"].as<float>();
     if (yaml["bunch_crossing_period"]) config.bunch_crossing_period = yaml["bunch_crossing_period"].as<float>();
     if (yaml["global_phase"]) config.global_phase = yaml["global_phase"].as<float>();
+    if (yaml["crossings_per_rev"]) config.crossings_per_rev = yaml["crossings_per_rev"].as<size_t>();
+    if (yaml["abort_gap"]) config.abort_gap = yaml["abort_gap"].as<size_t>();
+    if (yaml["filled_crossings"]) config.filled_crossings = yaml["filled_crossings"].as<size_t>();
     if (yaml["random_seed"]) config.random_seed = yaml["random_seed"].as<unsigned int>();
     if (yaml["introduce_offsets"]) config.introduce_offsets = yaml["introduce_offsets"].as<bool>();
 
@@ -344,6 +350,9 @@ void CommandLineParser::printConfiguration(const MergerConfig& config) {
     std::cout << "Timeframe duration: " << config.timeframe_duration << " ns" << std::endl;
     std::cout << "Bunch crossing period: " << config.bunch_crossing_period << " ns" << std::endl;
     std::cout << "Crossing global phase: " << config.global_phase << std::endl;
+    std::cout << "Crossings per revolution: " << config.crossings_per_rev << std::endl;
+    std::cout << "Abort gap: " << config.abort_gap << " crossings" << std::endl;
+    std::cout << "Filled Crossings: " << config.filled_crossings << std::endl;
     std::cout << "Random seed: " << config.random_seed << (config.random_seed == 0 ? " (using random_device)" : "") << std::endl;
     std::cout << "Introduce offsets: " << (config.introduce_offsets ? "true" : "false") << std::endl;
     std::cout << "Writer backend: " << config.writer << std::endl;
@@ -394,7 +403,10 @@ MergerConfig CommandLineParser::parse(int argc, char* argv[]) {
         {"duration", required_argument, 0, 'd'},
         {"frequency", required_argument, 0, 'f'},
         {"bunch-period", required_argument, 0, 'p'},
-        {"global-phase", required_argument, 0, 'p'},
+        {"global-phase", required_argument, 0, 'g'},
+        {"crossings-per-rev", required_argument, 0, 'r'},
+        {"abort-gap", required_argument, 0, 'a'},
+        {"filled_crossings", required_argument, 0, 'l'},
         {"random-seed", required_argument, 0, 1005},
         {"use-bunch-crossing", no_argument, 0, 'b'},
         {"static-events", no_argument, 0, 's'},
@@ -432,6 +444,15 @@ MergerConfig CommandLineParser::parse(int argc, char* argv[]) {
                 break;
             case 'p':
                 config.bunch_crossing_period = std::stof(optarg);
+                break;
+            case 'r':
+                config.crossings_per_rev = std::stoul(optarg);
+                break;
+            case 'a':
+                config.abort_gap = std::stoul(optarg);
+                break;
+            case 'l':
+                config.filled_crossings = std::stoul(optarg);
                 break;
             case 'b':
                 default_source.use_bunch_crossing = true;
