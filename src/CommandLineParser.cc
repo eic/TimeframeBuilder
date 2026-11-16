@@ -16,9 +16,9 @@ void CommandLineParser::printUsage(const char* program_name) {
               << "  -d, --duration TIME         Timeframe duration in ns (default: 20.0)\n"
               << "  -p, --bunch-period PERIOD   Bunch crossing period in ns (default: 10.152)\n"
               << "  -g, --global-phase          Global phase adjustment in fraction of a crossing period (default: 0.5)\n"
-              << "  -r, --crossings_per_rev N   Number of bunch crossings per revolution (default: 1260)"
-              << "  -a, --abort_gap N           Abort gap size in bunch crossings (default: 100)"
-              << "  -l, --filled_crossings N    Every N bunches filled (default: N=1 every crossing)"
+              << "  -r, --crossings-per-rev N   Number of bunch crossings per revolution (default: 1260)"
+              << "  -a, --abort-gap N           Abort gap size in bunch crossings (default: 100)"
+              << "  -l, --filled-crossings N    Every N bunches filled (default: N=1 every crossing)"
               << "  --random-seed SEED          Random number generator seed (default: 0, use random_device)\n"
               << "  --writer BACKEND            Output writer: 'root' (TTree, default)\n"
               << "  -h, --help                  Show this help message\n"
@@ -406,7 +406,7 @@ MergerConfig CommandLineParser::parse(int argc, char* argv[]) {
         {"global-phase", required_argument, 0, 'g'},
         {"crossings-per-rev", required_argument, 0, 'r'},
         {"abort-gap", required_argument, 0, 'a'},
-        {"filled_crossings", required_argument, 0, 'l'},
+        {"filled-crossings", required_argument, 0, 'l'},
         {"random-seed", required_argument, 0, 1005},
         {"use-bunch-crossing", no_argument, 0, 'b'},
         {"static-events", no_argument, 0, 's'},
