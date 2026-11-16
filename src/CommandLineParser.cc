@@ -522,6 +522,23 @@ MergerConfig CommandLineParser::parse(int argc, char* argv[]) {
     
     // Print configuration
     printConfiguration(config);
+
+    // Generate bunch pattern
+    size_t scaledn = 0; 
+    for(size_t i=0; i<config.crossings_per_rev; i++){
+      if( i>=(config.crossings_per_rev-config.abort_gap) ){
+	config.bunch_pattern[i] = false;  // abort gap always empty
+      }
+      else{
+       scaledn++;
+       if(scaledn==config.filled_crossings){
+	 scaledn=0;
+	 config.bunch_pattern[i] = true; 
+       }
+       else
+	 config.bunch_pattern[i] = false;
+      }
+    }
     
     return config;
 }

@@ -10,8 +10,13 @@ void DataHandler::mergeEvents(std::vector<std::unique_ptr<DataSource>>& sources,
                               float timeframe_duration,
                               float bunch_crossing_period,
                               float global_phase,
+			      size_t crossings_per_rev,
                               std::mt19937& gen) {
     current_timeframe_number_ = timeframe_number;
+
+    // randomly select the starting crossing position for the timeframe
+    std::uniform_int_distribution<size_t> uniform(0,(int)crossings_per_rev-1);
+    int start_crossing = uniform(gen); 
     
     size_t total_events_consumed = 0;
     // Iterate over all sources

@@ -3,7 +3,6 @@
 #include <string>
 #include <vector>
 
-
 struct SourceConfig {
     // Input/output configuration
     std::vector<std::string> input_files;
@@ -42,6 +41,9 @@ struct MergerConfig {
     size_t abort_gap{100};
     size_t filled_crossings{1}; 
     unsigned int random_seed{0};  // 0 means use random_device
+
+    // Bunch Pattern
+    std::vector<bool> bunch_pattern;
 
     // Config per source
     std::vector<SourceConfig> sources;

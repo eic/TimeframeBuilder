@@ -55,6 +55,7 @@ public:
                             float timeframe_duration,
                             float bunch_crossing_period,
                             float global_phase,
+			    size_t crossings_per_rev,
                             std::mt19937& gen) final;
 
     /**
