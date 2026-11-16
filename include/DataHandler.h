@@ -56,6 +56,7 @@ public:
                             float bunch_crossing_period,
                             float global_phase,
 			    size_t crossings_per_rev,
+                            const std::vector<bool>& bunch_pattern,
                             std::mt19937& gen) final;
 
     /**

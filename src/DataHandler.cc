@@ -11,6 +11,7 @@ void DataHandler::mergeEvents(std::vector<std::unique_ptr<DataSource>>& sources,
                               float bunch_crossing_period,
                               float global_phase,
 			      size_t crossings_per_rev,
+			      const std::vector<bool>& bunch_pattern,
                               std::mt19937& gen) {
     current_timeframe_number_ = timeframe_number;
 
@@ -29,7 +30,7 @@ void DataHandler::mergeEvents(std::vector<std::unique_ptr<DataSource>>& sources,
         for (size_t entry = 0; entry < entries_needed; ++entry) {
             // Load and prepare the event
             source->loadEvent(source->getCurrentEntryIndex());
-            source->UpdateTimeOffset(timeframe_duration, bunch_crossing_period, global_phase, gen);
+            source->UpdateTimeOffset(timeframe_duration, bunch_crossing_period, global_phase, start_crossing, bunch_pattern, gen);
             
             // Call format-specific processing
             processEvent(*source);
