@@ -30,7 +30,8 @@ void DataHandler::mergeEvents(std::vector<std::unique_ptr<DataSource>>& sources,
         for (size_t entry = 0; entry < entries_needed; ++entry) {
             // Load and prepare the event
             source->loadEvent(source->getCurrentEntryIndex());
-            source->UpdateTimeOffset(timeframe_duration, bunch_crossing_period, global_phase, start_crossing, bunch_pattern, gen);
+            source->UpdateTimeOffset(timeframe_duration, bunch_crossing_period, global_phase,
+                                     start_crossing, crossings_per_rev, bunch_pattern, gen);
             
             // Call format-specific processing
             processEvent(*source);

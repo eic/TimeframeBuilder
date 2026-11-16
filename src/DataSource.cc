@@ -6,6 +6,7 @@ void DataSource::UpdateTimeOffset(float timeframe_duration,
                                   float bunch_crossing_period,
                                   float global_phase,
 				  int   start_crossing,
+				  size_t crossings_per_rev,
 				  const std::vector<bool>& bunch_pattern,
                                   std::mt19937& rng) {
     float distance = 0.0f;
@@ -15,12 +16,13 @@ void DataSource::UpdateTimeOffset(float timeframe_duration,
         distance = calculateBeamDistance();
     }
     
-    current_time_offset_ = generateTimeOffset(distance, timeframe_duration, bunch_crossing_period, global_phase, start_crossing, bunch_pattern, rng);
+    current_time_offset_ = generateTimeOffset(distance, timeframe_duration, bunch_crossing_period, global_phase,
+                                              start_crossing, crossings_per_rev, bunch_pattern, rng);
 }
 
 float DataSource::generateTimeOffset(float distance, float timeframe_duration, 
-                                     float bunch_crossing_period, float global_phase, int start_crossing,
-                                     const std::vector<bool>& bunch_pattern, std::mt19937& rng) const {
+                                     float bunch_crossing_period, float global_phase, int start_crossing, \
+				     size_t crossings_per_rev, const std::vector<bool>& bunch_pattern, std::mt19937& rng) const {
     const auto& config = getConfig();
     
     std::uniform_real_distribution<float> uniform(0.0f, timeframe_duration);
@@ -29,7 +31,19 @@ float DataSource::generateTimeOffset(float distance, float timeframe_duration,
     if (!config.already_merged) {
         // Apply bunch crossing if enabled
         if (config.use_bunch_crossing) {
-            time_offset = std::floor(time_offset / bunch_crossing_period) * bunch_crossing_period + global_phase * bunch_crossing_period;	    
+
+	  // Make sure this is a valid bunch crossing
+	  bool found = false; 
+	  do{
+	    int cross_in_timeframe = std::floor(time_offset / bunch_crossing_period);
+	    std::div_t cross_in_pattern = std::div(std::div(cross_in_timeframe, crossings_per_rev).rem + start_crossing, crossings_per_rev);
+	    if(!bunch_pattern[cross_in_pattern.rem])
+	      time_offset = uniform(rng);
+	    else
+	      found = true;
+	  }while(!found); 
+	    
+          time_offset = std::floor(time_offset / bunch_crossing_period) * bunch_crossing_period + global_phase * bunch_crossing_period;	    
         }
         
         // Apply beam effects if enabled
