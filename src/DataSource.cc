@@ -29,11 +29,10 @@ float DataSource::generateTimeOffset(float distance, float timeframe_duration,
     float time_offset = uniform(rng);
     
     if (!config.already_merged) {
-        // Apply bunch crossing if enabled
-        if (config.use_bunch_crossing) {
-
-	  // Make sure this is a valid bunch crossing
-	  bool found = false; 
+        
+	// Constrain to a valid bunch crossing
+        if(config.use_bunch_crossing || config.attach_to_beam){
+          bool found = false; 
 	  do{
 	    int cross_in_timeframe = std::floor(time_offset / bunch_crossing_period);
 	    std::div_t cross_in_pattern = std::div(std::div(cross_in_timeframe, crossings_per_rev).rem + start_crossing, crossings_per_rev);
@@ -41,8 +40,11 @@ float DataSource::generateTimeOffset(float distance, float timeframe_duration,
 	      time_offset = uniform(rng);
 	    else
 	      found = true;
-	  }while(!found); 
-	    
+	  }while(!found);
+        }
+
+        // Apply bunch crossing if enabled
+        if (config.use_bunch_crossing) {	    
           time_offset = std::floor(time_offset / bunch_crossing_period) * bunch_crossing_period + global_phase * bunch_crossing_period;	    
         }
         
