@@ -17,13 +17,29 @@ void DataHandler::mergeEvents(std::vector<std::unique_ptr<DataSource>>& sources,
 
     // randomly select the starting crossing position for the timeframe
     std::uniform_int_distribution<size_t> uniform(0,(int)crossings_per_rev-1);
-    int start_crossing = uniform(gen); 
+    int start_crossing = uniform(gen);
+
+    // Calculate the populated vs. empty crossings in the timeframe
+    size_t populated_cross = 0;
+    size_t empty_cross = 0;
+    int cnt = start_crossing;
+    float cnt_time = 0.0; 
+    do{
+      if(bunch_pattern[cnt])
+        populated_cross++;
+      else
+        empty_cross++;
+      cnt++;
+      if(cnt>=crossings_per_rev) cnt = 0; 
+      cnt_time += bunch_crossing_period;
+    }while(cnt_time<timeframe_duration); 
     
     size_t total_events_consumed = 0;
     // Iterate over all sources
     for (auto& source : sources) {
         const auto& config = source->getConfig();
-        size_t entries_needed = source->getEntriesNeeded();
+        size_t entries_needed = static_cast<size_t>(source->getEntriesNeeded()*
+						    (static_cast<float>(populated_cross)/(populated_cross + empty_cross)));
         int events_consumed = 0;
         
         // Process each event from this source
