@@ -1,6 +1,7 @@
 // DataSource.cc - Base class implementation for shared functionality
 #include "DataSource.h"
 #include <cmath>
+#include <iostream>
 
 void DataSource::UpdateTimeOffset(float timeframe_duration,
                                   float bunch_crossing_period,
@@ -35,8 +36,8 @@ float DataSource::generateTimeOffset(float distance, float timeframe_duration,
           bool found = false; 
 	  do{
 	    int cross_in_timeframe = std::floor(time_offset / bunch_crossing_period);
-	    std::div_t cross_in_pattern = std::div(std::div(cross_in_timeframe, crossings_per_rev).rem + start_crossing, crossings_per_rev);
-	    if(!bunch_pattern[cross_in_pattern.rem])
+	    int cross_in_pattern = std::div(std::div(cross_in_timeframe, crossings_per_rev).rem + start_crossing, crossings_per_rev).rem;
+	    if(!bunch_pattern[cross_in_pattern])
 	      time_offset = uniform(rng);
 	    else
 	      found = true;
