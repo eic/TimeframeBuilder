@@ -16,9 +16,9 @@ void CommandLineParser::printUsage(const char* program_name) {
               << "  -d, --duration TIME         Timeframe duration in ns (default: 20.0)\n"
               << "  -p, --bunch-period PERIOD   Bunch crossing period in ns (default: 10.152)\n"
               << "  -g, --global-phase          Global phase adjustment in fraction of a crossing period (default: 0.5)\n"
-              << "  -r, --crossings-per-rev N   Number of bunch crossings per revolution (default: 1260)"
-              << "  -a, --abort-gap N           Abort gap size in bunch crossings (default: 100)"
-              << "  -l, --filled-crossings N    Every N bunches filled (default: N=1 every crossing)"
+              << "  -r, --crossings-per-rev N   Number of bunch crossings per revolution (default: 1260)\n"
+              << "  -a, --abort-gap N           Abort gap size in bunch crossings (default: 100)\n"
+              << "  -l, --filled-crossings N    Every N bunches filled (default: N=1 every crossing)\n"
               << "  --random-seed SEED          Random number generator seed (default: 0, use random_device)\n"
               << "  --writer BACKEND            Output writer: 'root' (TTree, default)\n"
               << "  -h, --help                  Show this help message\n"
@@ -425,7 +425,7 @@ MergerConfig CommandLineParser::parse(int argc, char* argv[]) {
     int opt;
     int option_index = 0;
     
-    while ((opt = getopt_long(new_argc, new_argv, "o:n:d:f:p:bse:hv", long_options, &option_index)) != -1) {
+    while ((opt = getopt_long(new_argc, new_argv, "o:n:d:f:p:g:r:a:l:bse:hv", long_options, &option_index)) != -1) {
         switch (opt) {
             case 1004:
                 config_file = optarg;
@@ -444,6 +444,9 @@ MergerConfig CommandLineParser::parse(int argc, char* argv[]) {
                 break;
             case 'p':
                 config.bunch_crossing_period = std::stof(optarg);
+                break;
+            case 'g':
+                config.global_phase = std::stof(optarg);
                 break;
             case 'r':
                 config.crossings_per_rev = std::stoul(optarg);
@@ -524,6 +527,7 @@ MergerConfig CommandLineParser::parse(int argc, char* argv[]) {
     printConfiguration(config);
 
     // Generate bunch pattern
+    config.bunch_pattern.assign(config.crossings_per_rev, false);
     size_t scaledn = 0; 
     for(size_t i=0; i<config.crossings_per_rev; i++){
       if( i>=(config.crossings_per_rev-config.abort_gap) ){
@@ -535,8 +539,6 @@ MergerConfig CommandLineParser::parse(int argc, char* argv[]) {
 	 scaledn=0;
 	 config.bunch_pattern[i] = true; 
        }
-       else
-	 config.bunch_pattern[i] = false;
       }
     }
     
