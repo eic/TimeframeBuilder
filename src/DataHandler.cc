@@ -38,8 +38,10 @@ void DataHandler::mergeEvents(std::vector<std::unique_ptr<DataSource>>& sources,
     // Iterate over all sources
     for (auto& source : sources) {
         const auto& config = source->getConfig();
-        size_t entries_needed = static_cast<size_t>(source->getEntriesNeeded()*
-						    (static_cast<float>(populated_cross)/(populated_cross + empty_cross)));
+        size_t entries_needed = source->getEntriesNeeded();
+	// scale entries if not forced
+        if(!config.static_number_of_events) entries_needed = static_cast<size_t>(entries_needed*(static_cast<float>(populated_cross)/(populated_cross + empty_cross)));
+
         int events_consumed = 0;
         
         // Process each event from this source

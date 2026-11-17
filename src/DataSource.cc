@@ -1,7 +1,6 @@
 // DataSource.cc - Base class implementation for shared functionality
 #include "DataSource.h"
 #include <cmath>
-#include <iostream>
 
 void DataSource::UpdateTimeOffset(float timeframe_duration,
                                   float bunch_crossing_period,
@@ -45,8 +44,8 @@ float DataSource::generateTimeOffset(float distance, float timeframe_duration,
         }
 
         // Apply bunch crossing if enabled
-        if (config.use_bunch_crossing) {	    
-          time_offset = std::floor(time_offset / bunch_crossing_period) * bunch_crossing_period + global_phase * bunch_crossing_period;	    
+        if (config.use_bunch_crossing) {
+          time_offset = std::floor(time_offset / bunch_crossing_period) * bunch_crossing_period + global_phase * bunch_crossing_period;
         }
         
         // Apply beam effects if enabled
