@@ -320,6 +320,20 @@ void CommandLineParser::validateConfiguration(MergerConfig& config) {
     if (config.sources.empty()) {
         throw std::runtime_error("Error: No valid sources with input files specified");
     }
+
+    // Check the bunch pattern - it must have at least one valid crossing
+    bool pattern_valid = false; 
+    for(size_t i=0; i<config.crossings_per_rev; i++){
+      if(config.bunch_pattern[i]) {
+	pattern_valid = true;
+	break;
+      }
+    }
+
+    if(!pattern_valid){
+        throw std::runtime_error("Error: bunch_pattern has no valid entries");
+    }
+    
 }
 
 void CommandLineParser::printConfiguration(const MergerConfig& config) {
@@ -520,12 +534,6 @@ MergerConfig CommandLineParser::parse(int argc, char* argv[]) {
         config.sources.push_back(default_source);
     }
     
-    // Validate configuration
-    validateConfiguration(config);
-    
-    // Print configuration
-    printConfiguration(config);
-
     // Generate bunch pattern
     config.bunch_pattern.assign(config.crossings_per_rev, false);
     size_t scaledn = 0; 
@@ -541,6 +549,13 @@ MergerConfig CommandLineParser::parse(int argc, char* argv[]) {
        }
       }
     }
+
+    // Validate configuration
+    validateConfiguration(config);
+    
+    // Print configuration
+    printConfiguration(config);
+
     
     return config;
 }
