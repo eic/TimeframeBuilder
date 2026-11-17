@@ -15,7 +15,7 @@ void CommandLineParser::printUsage(const char* program_name) {
               << "  -n, --nevents N             Maximum number of timeframes to generate (default: 100)\n"
               << "  -d, --duration TIME         Timeframe duration in ns (default: 20.0)\n"
               << "  -p, --bunch-period PERIOD   Bunch crossing period in ns (default: 10.152)\n"
-              << "  -g, --global-phase          Global phase adjustment in fraction of a crossing period (default: 0.5)\n"
+              << "  -g, --global-phase PHASE    Global phase adjustment in fraction of a crossing period (default: 0.5)\n"
               << "  -r, --crossings-per-rev N   Number of bunch crossings per revolution (default: 1260)\n"
               << "  -a, --abort-gap N           Abort gap size in bunch crossings (default: 100)\n"
               << "  -l, --filled-crossings N    Every N bunches filled (default: N=1 every crossing)\n"
