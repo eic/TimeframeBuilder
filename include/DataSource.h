@@ -41,7 +41,7 @@ public:
     virtual void loadEvent(size_t event_index) = 0;
     void UpdateTimeOffset(float timeframe_duration, float bunch_crossing_period,
 			  float global_phase, int start_crossing, size_t crossings_per_rev, 
-                          const std::vector<bool>& bunch_pattern, std::mt19937& rng);
+                          const std::vector<float>& populated_crossing_times, std::mt19937& rng);
     
     // Configuration access
     const SourceConfig& getConfig() const { return *config_; }
@@ -85,6 +85,6 @@ protected:
     float generateTimeOffset(float distance, float timeframe_duration, 
 			     float bunch_crossing_period, float global_phase,
                              int start_crossing, size_t crossings_per_rev,
-                             const std::vector<bool>& bunch_pattern,
+                             const std::vector<float>& populated_crossing_times,
                              std::mt19937& rng) const;
 };

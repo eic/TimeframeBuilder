@@ -19,28 +19,27 @@ void DataHandler::mergeEvents(std::vector<std::unique_ptr<DataSource>>& sources,
     std::uniform_int_distribution<size_t> uniform(0,(int)crossings_per_rev-1);
     int start_crossing = uniform(gen);
 
-    // Calculate the populated vs. empty crossings in the timeframe
-    size_t populated_cross = 0;
-    size_t empty_cross = 0;
+    // Create a map of populated crossings in the timeframe
     int cnt = start_crossing;
-    float cnt_time = 0.0; 
+    int cnt_total = 0; 
+    int crossings_in_timeframe = std::floor(timeframe_duration/bunch_crossing_period); 
+    std::vector<float> populated_crossing_times;  // start time of populated crossings
     do{
-      if(bunch_pattern[cnt])
-        populated_cross++;
-      else
-        empty_cross++;
+      if(bunch_pattern[cnt]) populated_crossing_times.push_back(cnt_total*bunch_crossing_period);
       cnt++;
       if(cnt>=crossings_per_rev) cnt = 0; 
-      cnt_time += bunch_crossing_period;
-    }while(cnt_time<timeframe_duration); 
-    
+      cnt_total++; 
+    }while(cnt_total<crossings_in_timeframe);
+
+    size_t live_fraction = static_cast<size_t>(populated_crossing_times.size())/crossings_in_timeframe;
+
     size_t total_events_consumed = 0;
     // Iterate over all sources
     for (auto& source : sources) {
         const auto& config = source->getConfig();
         size_t entries_needed = source->getEntriesNeeded();
 	// scale entries if not forced or timeframe has no valid crossings 
-        if((!config.static_number_of_events) || (populated_cross==0)) entries_needed = static_cast<size_t>(entries_needed*(static_cast<float>(populated_cross)/(populated_cross + empty_cross)));
+        if((!config.static_number_of_events) || (populated_crossing_times.size()==0)) entries_needed *= live_fraction;  
 
         int events_consumed = 0;
         
@@ -49,7 +48,7 @@ void DataHandler::mergeEvents(std::vector<std::unique_ptr<DataSource>>& sources,
             // Load and prepare the event
             source->loadEvent(source->getCurrentEntryIndex());
             source->UpdateTimeOffset(timeframe_duration, bunch_crossing_period, global_phase,
-                                     start_crossing, crossings_per_rev, bunch_pattern, gen);
+                                     start_crossing, crossings_per_rev, populated_crossing_times, gen);
             
             // Call format-specific processing
             processEvent(*source);
