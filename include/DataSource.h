@@ -82,9 +82,8 @@ protected:
     float calculateBeamDistance() const;
     
     // Shared time offset generation logic
-    float generateTimeOffset(float distance, float timeframe_duration, 
+    float generateTimeOffset(float distance, 
 			     float bunch_crossing_period, float global_phase,
-                             int start_crossing, size_t crossings_per_rev,
                              const std::vector<float>& populated_crossing_times,
                              std::mt19937& rng) const;
 };

@@ -5,7 +5,7 @@
 void DataSource::UpdateTimeOffset(float timeframe_duration,
                                   float bunch_crossing_period,
                                   float global_phase,
-				  int   start_crossing,
+				  int start_crossing,
 				  size_t crossings_per_rev,
 				  const std::vector<float>& populated_crossing_times,
                                   std::mt19937& rng) {
@@ -16,16 +16,15 @@ void DataSource::UpdateTimeOffset(float timeframe_duration,
         distance = calculateBeamDistance();
     }
     
-    current_time_offset_ = generateTimeOffset(distance, timeframe_duration, bunch_crossing_period, global_phase,
-                                              start_crossing, crossings_per_rev, populated_crossing_times, rng);
+    current_time_offset_ = generateTimeOffset(distance, bunch_crossing_period, global_phase,
+                                              populated_crossing_times, rng);
 }
 
-float DataSource::generateTimeOffset(float distance, float timeframe_duration, 
-                                     float bunch_crossing_period, float global_phase, int start_crossing, \
-				     size_t crossings_per_rev, const std::vector<float>& populated_crossing_times, std::mt19937& rng) const {
+float DataSource::generateTimeOffset(float distance, float bunch_crossing_period, float global_phase, 
+				     const std::vector<float>& populated_crossing_times, std::mt19937& rng) const {
     const auto& config = getConfig();
     
-    std::uniform_int_distribution<int> uniform_int(0, populated_crossing_times.size());
+    std::uniform_int_distribution<int> uniform_int(0, populated_crossing_times.size()-1);
     float time_offset = populated_crossing_times[uniform_int(rng)];
     
     if (!config.already_merged) {

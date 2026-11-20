@@ -31,15 +31,18 @@ void DataHandler::mergeEvents(std::vector<std::unique_ptr<DataSource>>& sources,
       cnt_total++; 
     }while(cnt_total<crossings_in_timeframe);
 
-    size_t live_fraction = static_cast<size_t>(populated_crossing_times.size())/crossings_in_timeframe;
+    double live_fraction = double(populated_crossing_times.size())/crossings_in_timeframe;
 
     size_t total_events_consumed = 0;
     // Iterate over all sources
     for (auto& source : sources) {
         const auto& config = source->getConfig();
-        size_t entries_needed = source->getEntriesNeeded();
-	// scale entries if not forced or timeframe has no valid crossings 
-        if((!config.static_number_of_events) || (populated_crossing_times.size()==0)) entries_needed *= live_fraction;  
+	
+	size_t entries_needed;
+        if (config.already_merged || config.static_number_of_events) 
+          entries_needed = source->getEntriesNeeded();
+	else
+	  entries_needed = std::poisson_distribution<>(timeframe_duration * live_fraction * config.mean_event_frequency)(gen);
 
         int events_consumed = 0;
         
