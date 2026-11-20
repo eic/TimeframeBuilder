@@ -39,11 +39,14 @@ void DataHandler::mergeEvents(std::vector<std::unique_ptr<DataSource>>& sources,
         const auto& config = source->getConfig();
 	
 	size_t entries_needed;
-        if (config.already_merged || config.static_number_of_events) 
+        if (config.already_merged || config.static_number_of_events)  
           entries_needed = source->getEntriesNeeded();
-	else
-	  entries_needed = std::poisson_distribution<>(timeframe_duration * live_fraction * config.mean_event_frequency)(gen);
-
+	else{
+	  if(config.attach_to_beam || config.use_bunch_crossing)
+	    entries_needed = std::poisson_distribution<>(timeframe_duration * live_fraction * config.mean_event_frequency)(gen);
+	  else
+	    entries_needed = source->getEntriesNeeded(); 
+	}
         int events_consumed = 0;
         
         // Process each event from this source
@@ -51,7 +54,7 @@ void DataHandler::mergeEvents(std::vector<std::unique_ptr<DataSource>>& sources,
             // Load and prepare the event
             source->loadEvent(source->getCurrentEntryIndex());
             source->UpdateTimeOffset(timeframe_duration, bunch_crossing_period, global_phase,
-                                     start_crossing, crossings_per_rev, populated_crossing_times, gen);
+                                     populated_crossing_times, gen);
             
             // Call format-specific processing
             processEvent(*source);

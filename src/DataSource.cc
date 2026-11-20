@@ -5,8 +5,6 @@
 void DataSource::UpdateTimeOffset(float timeframe_duration,
                                   float bunch_crossing_period,
                                   float global_phase,
-				  int start_crossing,
-				  size_t crossings_per_rev,
 				  const std::vector<float>& populated_crossing_times,
                                   std::mt19937& rng) {
     float distance = 0.0f;
@@ -16,16 +14,26 @@ void DataSource::UpdateTimeOffset(float timeframe_duration,
         distance = calculateBeamDistance();
     }
     
-    current_time_offset_ = generateTimeOffset(distance, bunch_crossing_period, global_phase,
+    current_time_offset_ = generateTimeOffset(distance, timeframe_duration, bunch_crossing_period, global_phase,
                                               populated_crossing_times, rng);
 }
 
-float DataSource::generateTimeOffset(float distance, float bunch_crossing_period, float global_phase, 
+float DataSource::generateTimeOffset(float distance, float timeframe_duration, float bunch_crossing_period, float global_phase, 
 				     const std::vector<float>& populated_crossing_times, std::mt19937& rng) const {
     const auto& config = getConfig();
-    
-    std::uniform_int_distribution<int> uniform_int(0, populated_crossing_times.size()-1);
-    float time_offset = populated_crossing_times[uniform_int(rng)];
+
+    float time_offset = 0.0; 
+
+    if((populated_crossing_times.size()>0)&&(!config.already_merged && (config.use_bunch_crossing||config.attach_to_beam))){
+      // constrain times to populated crossings 
+      std::uniform_int_distribution<int> uniform_int(0, populated_crossing_times.size()-1);
+      time_offset = populated_crossing_times[uniform_int(rng)];
+    }
+    else{
+      // randomize within the timeframe window
+      std::uniform_real_distribution<float> uniform(0, timeframe_duration);
+      time_offset = uniform(rng); 
+    }
     
     if (!config.already_merged) {
         
@@ -33,7 +41,7 @@ float DataSource::generateTimeOffset(float distance, float bunch_crossing_period
         if (config.use_bunch_crossing) {
           time_offset += (global_phase * bunch_crossing_period);
         }
-        
+	
         // Apply beam effects if enabled
         if (config.attach_to_beam) {
 	  
@@ -50,13 +58,7 @@ float DataSource::generateTimeOffset(float distance, float bunch_crossing_period
                 time_offset += spread_dist(rng);
             }
         }
-    }
-    else{
 
-      // randomize within the bunch_crossing_period
-      std::uniform_real_distribution<float> uniform(0, bunch_crossing_period);
-      time_offset += uniform(rng); 
-      
     }
     
     return time_offset;
