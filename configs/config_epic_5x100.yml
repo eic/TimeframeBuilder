@@ -2,8 +2,11 @@
 output_file: merged_timeframes_5x100.edm4hep.root
 max_events: 100
 timeframe_duration: 2000.0 # in ns
-bunch_crossing_period: 10.0 # in ns
+bunch_crossing_period: 10.152 # in ns
 global_phase: 0.5
+crossings_per_rev: 1260 
+abort_gap: 100
+filled_crossings: 1
 introduce_offsets: true
 sources:
   - name: signal

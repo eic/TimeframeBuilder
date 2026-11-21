@@ -4,8 +4,11 @@
 output_file: merged_hepmc3.hepmc3.tree.root
 max_events: 100
 timeframe_duration: 2000.0  # nanoseconds
-bunch_crossing_period: 10.0
+bunch_crossing_period: 10.152
 global_phase: 0.5
+crossings_per_rev: 1260 
+abort_gap: 100
+filled_crossings: 1
 introduce_offsets: true
 
 sources:
