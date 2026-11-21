@@ -47,7 +47,8 @@ void TimeframeBuilder::run() {
         // Merge events from all sources
         data_handler_->mergeEvents(
             data_sources_, events_generated, m_config.timeframe_duration,
-            m_config.bunch_crossing_period, m_config.global_phase, gen);
+            m_config.bunch_crossing_period, m_config.global_phase, m_config.crossings_per_rev,
+	    m_config.bunch_pattern, gen);
 
         // Write the timeframe
         data_handler_->writeTimeframe();
