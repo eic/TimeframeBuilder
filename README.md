@@ -1,6 +1,6 @@
 # Timeframe Builder
 
-An application for merging multiple events from hepmc3 root files or simulated edm4hep files into timeframes. All collections of particles and hits are zipped together while maintaining the references between collections.  
+An application for merging multiple events from hepmc3 root files or simulated edm4hep files into timeframes. All collections of particles and hits are zipped together while maintaining the references between collections.
 
 This tool provides control over timing adjustments allowing optional shifting of the time from each event source based on:
 - Bunch crossing periods.
@@ -28,6 +28,21 @@ The memory usage profile during each step is also recorded and reported. [Curren
 - **HepMC3**: If available, enables support for `.hepmc3.tree.root` format files. If not found during build, only EDM4hep format will be supported.
 
 ## Building
+
+### Pre-commit Checks
+
+The repository uses pre-commit hooks for YAML, whitespace, spelling, C++ formatting, and CMake formatting and linting. Install and enable them with:
+
+```bash
+python -m pip install pre-commit
+pre-commit install
+```
+
+Run the checks across all tracked files with:
+
+```bash
+pre-commit run --all-files
+```
 
 ### Quick Build
 
@@ -446,7 +461,7 @@ Encapsulates input file management and data reading:
 - Manages branch pointers for different collection types
 - Provides event processing and time offset calculation methods
 
-#### MergedCollections Structure  
+#### MergedCollections Structure
 Organizes all merged output data:
 - Event and particle collections (MCParticle, EventHeader)
 - Hit collections (SimTrackerHit, SimCalorimeterHit, CaloHitContribution)
@@ -531,7 +546,7 @@ Main orchestration class:
 
 ### Code Structure
 - `src/TimeframeBuilder.cc`: Core merging logic and orchestration
-- `src/DataSource.cc`: Input file management and data reading  
+- `src/DataSource.cc`: Input file management and data reading
 - `src/timeframe_builder_main.cc`: Command line interface and configuration parsing
 - `include/TimeframeBuilder.h`: Main API and data structures
 - `include/DataSource.h`: Input data source abstraction
