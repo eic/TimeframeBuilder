@@ -20,9 +20,14 @@ void CommandLineParser::printUsage(const char *program_name) {
       << "  -d, --duration TIME         Timeframe duration in ns (default: "
          "20.0)\n"
       << "  -p, --bunch-period PERIOD   Bunch crossing period in ns (default: "
-         "10.0)\n"
-      << "  -g, --global-phase          Global phase adjustment in fraction of "
-         "a crossing period (default: 0.0)\n"
+         "10.152)\n"
+      << "  -g, --global-phase PHASE    Global phase adjustment in fraction of "
+         "a crossing period (default: 0.5)\n"
+      << "  -r, --crossings-per-rev N   Number of crossings per revolution "
+         "(default: 1260)\n"
+      << "  -a, --abort-gap N           Number of empty crossings at the end "
+         "(default: 100)\n"
+      << "  -l, --filled-crossings N    Fill every Nth crossing (default: 1)\n"
       << "  --random-seed SEED          Random number generator seed (default: "
          "0, use random_device)\n"
       << "  --writer BACKEND            Output writer: 'root' (TTree, "
@@ -233,6 +238,12 @@ void CommandLineParser::loadYAMLConfig(const std::string &config_file,
     config.bunch_crossing_period = yaml["bunch_crossing_period"].as<float>();
   if (yaml["global_phase"])
     config.global_phase = yaml["global_phase"].as<float>();
+  if (yaml["crossings_per_rev"])
+    config.crossings_per_rev = yaml["crossings_per_rev"].as<size_t>();
+  if (yaml["abort_gap"])
+    config.abort_gap = yaml["abort_gap"].as<size_t>();
+  if (yaml["filled_crossings"])
+    config.filled_crossings = yaml["filled_crossings"].as<size_t>();
   if (yaml["random_seed"])
     config.random_seed = yaml["random_seed"].as<unsigned int>();
   if (yaml["introduce_offsets"])
@@ -385,6 +396,28 @@ void CommandLineParser::validateConfiguration(MergerConfig &config) {
     throw std::runtime_error(
         "Error: No valid sources with input files specified");
   }
+
+  if (config.crossings_per_rev == 0 ||
+      config.abort_gap >= config.crossings_per_rev ||
+      config.filled_crossings == 0 || config.bunch_crossing_period <= 0.0f ||
+      config.timeframe_duration < config.bunch_crossing_period) {
+    throw std::runtime_error("Error: Invalid bunch structure configuration");
+  }
+
+  const size_t filled_region = config.crossings_per_rev - config.abort_gap;
+  config.bunch_pattern.assign(config.crossings_per_rev, false);
+  size_t filled_spacing = 0;
+  for (size_t crossing = 0; crossing < filled_region; ++crossing) {
+    if (++filled_spacing == config.filled_crossings) {
+      filled_spacing = 0;
+      config.bunch_pattern[crossing] = true;
+    }
+  }
+
+  if (std::none_of(config.bunch_pattern.begin(), config.bunch_pattern.end(),
+                   [](bool filled) { return filled; })) {
+    throw std::runtime_error("Error: bunch pattern has no valid crossings");
+  }
 }
 
 void CommandLineParser::printConfiguration(const MergerConfig &config) {
@@ -426,6 +459,10 @@ void CommandLineParser::printConfiguration(const MergerConfig &config) {
   std::cout << "Bunch crossing period: " << config.bunch_crossing_period
             << " ns" << std::endl;
   std::cout << "Crossing global phase: " << config.global_phase << std::endl;
+  std::cout << "Crossings per revolution: " << config.crossings_per_rev
+            << std::endl;
+  std::cout << "Abort gap: " << config.abort_gap << " crossings" << std::endl;
+  std::cout << "Filled crossings: " << config.filled_crossings << std::endl;
   std::cout << "Random seed: " << config.random_seed
             << (config.random_seed == 0 ? " (using random_device)" : "")
             << std::endl;
@@ -479,7 +516,10 @@ MergerConfig CommandLineParser::parse(int argc, char *argv[]) {
       {"duration", required_argument, 0, 'd'},
       {"frequency", required_argument, 0, 'f'},
       {"bunch-period", required_argument, 0, 'p'},
-      {"global-phase", required_argument, 0, 'p'},
+      {"global-phase", required_argument, 0, 'g'},
+      {"crossings-per-rev", required_argument, 0, 'r'},
+      {"abort-gap", required_argument, 0, 'a'},
+      {"filled-crossings", required_argument, 0, 'l'},
       {"random-seed", required_argument, 0, 1005},
       {"use-bunch-crossing", no_argument, 0, 'b'},
       {"static-events", no_argument, 0, 's'},
@@ -497,7 +537,7 @@ MergerConfig CommandLineParser::parse(int argc, char *argv[]) {
   int opt;
   int option_index = 0;
 
-  while ((opt = getopt_long(new_argc, new_argv, "o:n:d:f:p:bse:hv",
+  while ((opt = getopt_long(new_argc, new_argv, "o:n:d:f:p:g:r:a:l:bse:hv",
                             long_options, &option_index)) != -1) {
     switch (opt) {
     case 1004:
@@ -517,6 +557,18 @@ MergerConfig CommandLineParser::parse(int argc, char *argv[]) {
       break;
     case 'p':
       config.bunch_crossing_period = std::stof(optarg);
+      break;
+    case 'g':
+      config.global_phase = std::stof(optarg);
+      break;
+    case 'r':
+      config.crossings_per_rev = std::stoul(optarg);
+      break;
+    case 'a':
+      config.abort_gap = std::stoul(optarg);
+      break;
+    case 'l':
+      config.filled_crossings = std::stoul(optarg);
       break;
     case 'b':
       default_source.use_bunch_crossing = true;

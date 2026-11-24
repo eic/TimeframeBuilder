@@ -98,6 +98,15 @@ HepMC3DataHandler::configureMetadata(const MergerConfig &config) {
   runInfo->add_attribute(metadata_prefix + "global_phase",
                          std::make_shared<HepMC3::StringAttribute>(
                              std::to_string(config.global_phase)));
+  runInfo->add_attribute(metadata_prefix + "crossings_per_rev",
+                         std::make_shared<HepMC3::StringAttribute>(
+                             std::to_string(config.crossings_per_rev)));
+  runInfo->add_attribute(metadata_prefix + "abort_gap",
+                         std::make_shared<HepMC3::StringAttribute>(
+                             std::to_string(config.abort_gap)));
+  runInfo->add_attribute(metadata_prefix + "filled_crossings",
+                         std::make_shared<HepMC3::StringAttribute>(
+                             std::to_string(config.filled_crossings)));
   runInfo->add_attribute(metadata_prefix + "max_events",
                          std::make_shared<HepMC3::StringAttribute>(
                              std::to_string(config.max_events)));

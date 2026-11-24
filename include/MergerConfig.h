@@ -35,9 +35,14 @@ struct SourceConfig {
 struct MergerConfig {
   bool introduce_offsets{true};
   float timeframe_duration{2000.0f};
-  float bunch_crossing_period{10.0f};
+  float bunch_crossing_period{10.152f};
   float global_phase{0.5f};
+  size_t crossings_per_rev{1260};
+  size_t abort_gap{100};
+  size_t filled_crossings{1};
   unsigned int random_seed{0}; // 0 means use random_device
+
+  std::vector<bool> bunch_pattern;
 
   // Config per source
   std::vector<SourceConfig> sources;

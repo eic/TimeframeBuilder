@@ -57,6 +57,8 @@ public:
   virtual void mergeEvents(std::vector<std::unique_ptr<DataSource>> &sources,
                            size_t timeframe_number, float timeframe_duration,
                            float bunch_crossing_period, float global_phase,
+                           size_t crossings_per_rev,
+                           const std::vector<bool> &bunch_pattern,
                            std::mt19937 &gen) final;
 
   /**
