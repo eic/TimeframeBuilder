@@ -29,6 +29,21 @@ The memory usage profile during each step is also recorded and reported. [Curren
 
 ## Building
 
+### Pre-commit Checks
+
+The repository uses pre-commit hooks for YAML, whitespace, spelling, C++ formatting, and CMake formatting and linting. Install and enable them with:
+
+```bash
+python -m pip install pre-commit
+pre-commit install
+```
+
+Run the checks across all tracked files with:
+
+```bash
+pre-commit run --all-files
+```
+
 ### Quick Build
 
 Use the provided build script for automatic configuration and compilation:
