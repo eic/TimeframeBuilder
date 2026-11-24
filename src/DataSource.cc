@@ -2,11 +2,9 @@
 #include "DataSource.h"
 #include <cmath>
 
-void DataSource::UpdateTimeOffset(float timeframe_duration,
-                                  float bunch_crossing_period,
-                                  float global_phase,
-                                  const std::vector<float> &populated_crossing_times,
-                                  std::mt19937 &rng) {
+void DataSource::UpdateTimeOffset(
+    float timeframe_duration, float bunch_crossing_period, float global_phase,
+    const std::vector<float> &populated_crossing_times, std::mt19937 &rng) {
   float distance = 0.0f;
 
   // Calculate beam distance if needed (format-specific)
@@ -14,16 +12,15 @@ void DataSource::UpdateTimeOffset(float timeframe_duration,
     distance = calculateBeamDistance();
   }
 
-  current_time_offset_ = generateTimeOffset(
-      distance, timeframe_duration, bunch_crossing_period, global_phase,
-      populated_crossing_times, rng);
+  current_time_offset_ =
+      generateTimeOffset(distance, timeframe_duration, bunch_crossing_period,
+                         global_phase, populated_crossing_times, rng);
 }
 
-float DataSource::generateTimeOffset(float distance, float timeframe_duration,
-                                     float bunch_crossing_period,
-                                     float global_phase,
-                                     const std::vector<float> &populated_crossing_times,
-                                     std::mt19937 &rng) const {
+float DataSource::generateTimeOffset(
+    float distance, float timeframe_duration, float bunch_crossing_period,
+    float global_phase, const std::vector<float> &populated_crossing_times,
+    std::mt19937 &rng) const {
   const auto &config = getConfig();
 
   float time_offset;
@@ -50,8 +47,8 @@ float DataSource::generateTimeOffset(float distance, float timeframe_duration,
       time_offset += uniform(rng);
 
       // Add time offset based on distance along beam
-      time_offset += distance / config.beam_speed +
-                     global_phase * bunch_crossing_period;
+      time_offset +=
+          distance / config.beam_speed + global_phase * bunch_crossing_period;
 
       // Add Gaussian spread if specified
       if (config.beam_spread > 0.0f) {
