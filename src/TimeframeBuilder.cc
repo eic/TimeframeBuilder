@@ -98,8 +98,8 @@ bool TimeframeBuilder::updateInputNEvents(
     } else {
       // Use Poisson for this source
       float mean_freq = config.mean_event_frequency;
-      std::poisson_distribution<> poisson_dist(m_config.timeframe_duration *
-                                               mean_freq);
+      std::poisson_distribution<> poisson_dist(
+          static_cast<double>(m_config.timeframe_duration) * mean_freq);
       size_t n = poisson_dist(gen);
       data_source->setEntriesNeeded(n);
     }
