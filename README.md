@@ -1,6 +1,6 @@
 # Timeframe Builder
 
-An application for merging multiple events from hepmc3 root files or simulated edm4hep files into timeframes. All collections of particles and hits are zipped together while maintaining the references between collections.  
+An application for merging multiple events from hepmc3 root files or simulated edm4hep files into timeframes. All collections of particles and hits are zipped together while maintaining the references between collections.
 
 This tool provides control over timing adjustments allowing optional shifting of the time from each event source based on:
 - Bunch crossing periods.
@@ -461,7 +461,7 @@ Encapsulates input file management and data reading:
 - Manages branch pointers for different collection types
 - Provides event processing and time offset calculation methods
 
-#### MergedCollections Structure  
+#### MergedCollections Structure
 Organizes all merged output data:
 - Event and particle collections (MCParticle, EventHeader)
 - Hit collections (SimTrackerHit, SimCalorimeterHit, CaloHitContribution)
@@ -546,7 +546,7 @@ Main orchestration class:
 
 ### Code Structure
 - `src/TimeframeBuilder.cc`: Core merging logic and orchestration
-- `src/DataSource.cc`: Input file management and data reading  
+- `src/DataSource.cc`: Input file management and data reading
 - `src/timeframe_builder_main.cc`: Command line interface and configuration parsing
 - `include/TimeframeBuilder.h`: Main API and data structures
 - `include/DataSource.h`: Input data source abstraction

@@ -47,7 +47,7 @@ for csv_file in "$REPORT_DIR"/*.csv; do
         filename=$(basename "$csv_file" .csv)
         # Convert underscores to spaces for display
         display_name="${filename//_/ }"
-        
+
         cat >> "$REPORT_DIR/index.html" << EOFHTML
     <h2>$display_name</h2>
     <div class="stats">
@@ -68,11 +68,11 @@ for csv_file in "$REPORT_DIR"/*.csv; do
                     vms.push(v);
                 }
             });
-            
+
             const maxRss = Math.max(...rss);
             const avgRss = rss.reduce((a,b) => a+b, 0) / rss.length;
             const duration = Math.max(...times);
-            
+
             document.getElementById('stats-${filename}').innerHTML = \`
                 <div class="stat-item">
                     <div class="stat-label">Peak RSS</div>
@@ -87,7 +87,7 @@ for csv_file in "$REPORT_DIR"/*.csv; do
                     <div class="stat-value">\${duration} s</div>
                 </div>
             \`;
-            
+
             const trace1 = {
                 x: times, y: rss,
                 name: 'RSS (Resident Set Size)',

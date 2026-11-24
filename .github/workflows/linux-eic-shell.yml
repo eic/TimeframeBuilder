@@ -121,7 +121,7 @@ jobs:
           TF_PID=$!
           .github/scripts/monitor_memory.sh $TF_PID edm4hep_merge_memory.csv
           wait $TF_PID
-          
+
           ls -lh merged_ci_18x275.edm4hep.root
     - name: Upload EDM4hep merger output
       uses: actions/upload-artifact@v6
@@ -168,7 +168,7 @@ jobs:
           TF_PID=$!
           .github/scripts/monitor_memory.sh $TF_PID hepmc3_merge_memory.csv --tree
           wait $TF_PID
-          
+
           ls -lh merged_ci_18x275.hepmc3.tree.root
     - name: Upload HepMC3 merger output
       uses: actions/upload-artifact@v6
@@ -211,7 +211,7 @@ jobs:
             --outputFile hepmc3-old-merger_ci_18x275.hepmc3.tree.root &
           TF_PID=$!
           .github/scripts/monitor_memory.sh $TF_PID hepmc3-old-merger_memory.csv --tree
-          wait $TF_PID          
+          wait $TF_PID
           ls -lh hepmc3-old-merger_ci_18x275.hepmc3.tree.root
     - name: Upload HepMC3 merger output
       uses: actions/upload-artifact@v6
@@ -248,7 +248,7 @@ jobs:
         platform-release: "eic_xl:nightly"
         run: |
           source /opt/detector/epic-main/bin/thisepic.sh
-          
+
           # Run npsim on the merged HepMC3 events
           npsim --compactFile $DETECTOR_PATH/epic_craterlake.xml \
                 --physics.alternativeStableStatuses "1001 2001 3001 4001 5001 6001 7001" \
@@ -258,7 +258,7 @@ jobs:
           NPSIM_PID=$!
           .github/scripts/monitor_memory.sh $NPSIM_PID merged-epic-simulation.csv --tree
           wait $NPSIM_PID
-          
+
           ls -lh sim_ci_18x275.edm4hep.root
     - name: Upload simulated events
       uses: actions/upload-artifact@v6
@@ -291,13 +291,13 @@ jobs:
         platform-release: "eic_xl:nightly"
         run: |
           source /opt/detector/epic-main/bin/thisepic.sh
-          
+
           # Run eicrecon on simulated events from EPIC simulation
           eicrecon -Pplugins=dump_flags sim_ci_18x275.edm4hep.root -Pjana:loglevel=info -Pjana:warmup_timeout=0 -Pjana:timeout=0 -Ppodio:output_file=recon_ci_18x275_from_epic.eicrecon.edm4eic.root &
           EICRECON_PID=$!
           .github/scripts/monitor_memory.sh $EICRECON_PID eicrecon_epic_memory.csv --tree
           wait $EICRECON_PID
-          
+
           ls -lh recon_ci_18x275_from_epic.eicrecon.edm4eic.root 2>/dev/null || echo "Warning: eicrecon output not found"
     - name: Upload reconstructed events
       uses: actions/upload-artifact@v6
@@ -336,7 +336,7 @@ jobs:
         platform-release: "eic_xl:nightly"
         run: |
           source /opt/detector/epic-main/bin/thisepic.sh
-          
+
           # Verify file exists
           ls -lh merged_ci_18x275.edm4hep.root
           # Run eicrecon directly on merged EDM4hep events
@@ -344,7 +344,7 @@ jobs:
           EICRECON_PID=$!
           .github/scripts/monitor_memory.sh $EICRECON_PID eicrecon_edm4hep_memory.csv
           wait $EICRECON_PID
-          
+
           ls -lh recon_ci_18x275_from_edm4hep.eicrecon.edm4eic.root 2>/dev/null || echo "Warning: eicrecon output not found"
     - name: Upload reconstructed events
       uses: actions/upload-artifact@v6
@@ -361,7 +361,7 @@ jobs:
 
   #capybara-report-hepmc3:
   #  runs-on: ubuntu-24.04
-  #  needs: 
+  #  needs:
   #    - test-hepmc3
   #    - test-hepmc3-old-merger
   #  steps:
@@ -404,7 +404,7 @@ jobs:
 
   capybara-report:
     runs-on: ubuntu-24.04
-    needs: 
+    needs:
       - eicrecon-from-edm4hep
       - eicrecon-from-epic
     steps:
@@ -444,7 +444,7 @@ jobs:
           pr-*/
           main/
         retention-days: 1
-        
+
   combine-memory-reports:
     runs-on: ubuntu-24.04
     needs:
@@ -472,14 +472,14 @@ jobs:
           name: memory-reports
           path: combined_memory/
           retention-days: 1
-        
+
   collect-docs:
     runs-on: ubuntu-24.04
     needs:
       - capybara-report
       - combine-memory-reports
     steps:
-      - uses: actions/checkout@v4      
+      - uses: actions/checkout@v4
       - name: Fix script permissions
         run: chmod +x .github/scripts/generate_memory_report.sh
       - name: Download capybara report
@@ -498,15 +498,15 @@ jobs:
           REPORT_DIR=$(find capybara_artifact -mindepth 1 -maxdepth 1 -type d -printf "%f\n")
           echo "Report directory: $REPORT_DIR"
           echo "REPORT_DIR=$REPORT_DIR" >> $GITHUB_ENV
-          
+
           # Move report to publishing directory
           mkdir -p publishing_docs/capybara
           mv capybara_artifact/$REPORT_DIR publishing_docs/capybara/
-          
+
           # Create memory usage report
           mkdir -p publishing_docs/memory/$REPORT_DIR
           cp memory_reports/*.csv publishing_docs/memory/$REPORT_DIR/ 2>/dev/null || true
-          
+
           # Generate HTML report for memory usage
           .github/scripts/generate_memory_report.sh publishing_docs/memory/$REPORT_DIR
       - name: List content to publish
