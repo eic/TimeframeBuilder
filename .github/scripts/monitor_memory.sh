@@ -1,7 +1,7 @@
 #!/bin/bash
 # Memory monitoring script for CI pipeline
 # Usage: monitor_memory.sh <PID> <output_csv> [--tree]
-# 
+#
 # Options:
 #   --tree    Monitor entire process tree (for processes like snakemake that spawn children)
 
@@ -32,12 +32,12 @@ get_tree_memory() {
     local parent_pid=$1
     local total_rss=0
     local total_vms=0
-    
+
     # Get all processes with parent PID (direct children and grandchildren)
     # Using pgrep with -P flag gets direct children, then recursively get their children
     local all_pids=$(pgrep -P $parent_pid 2>/dev/null)
     all_pids="$parent_pid $all_pids"
-    
+
     for pid in $all_pids; do
         if [ -f /proc/$pid/status ]; then
             local rss=$(grep VmRSS /proc/$pid/status 2>/dev/null | awk '{print $2}')
@@ -46,7 +46,7 @@ get_tree_memory() {
             total_vms=$((total_vms + ${vms:-0}))
         fi
     done
-    
+
     echo "$total_rss $total_vms"
 }
 
@@ -54,7 +54,7 @@ get_tree_memory() {
 while kill -0 $PID 2>/dev/null; do
     CURRENT=$(date +%s)
     ELAPSED=$((CURRENT - START))
-    
+
     if [ "$TRACK_TREE" == "--tree" ]; then
         # Monitor entire process tree
         read RSS VMS <<< "$(get_tree_memory $PID)"
@@ -62,8 +62,7 @@ while kill -0 $PID 2>/dev/null; do
         # Monitor single process
         read RSS VMS <<< "$(get_single_memory $PID)"
     fi
-    
+
     echo "$ELAPSED,$((${RSS:-0}/1024)),$((${VMS:-0}/1024))" >> "$OUTPUT"
     sleep 0.5
 done
-

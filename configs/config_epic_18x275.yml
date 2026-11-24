@@ -11,7 +11,7 @@ introduce_offsets: true
 sources:
   - name: signal
     input_files:
-      - input3.edm4hep.root    
+      - input3.edm4hep.root
     static_number_of_events: true
     static_events_per_timeframe: 1
     use_bunch_crossing: true
@@ -19,7 +19,7 @@ sources:
     keep_weight: true
   - name: minbias
     input_files:
-      - input3.edm4hep.root    
+      - input3.edm4hep.root
     static_number_of_events: false
     mean_event_frequency: 0.000083 # in GHz
     use_bunch_crossing: true
@@ -27,7 +27,7 @@ sources:
     repeat_on_eof: true
   - name: bethe_heitler
     input_files:
-      - input3.edm4hep.root    
+      - input3.edm4hep.root
     static_number_of_events: false
     mean_event_frequency: 1.8 # in GHz # Check value
     use_bunch_crossing: true

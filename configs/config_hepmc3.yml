@@ -21,7 +21,7 @@ sources:
     attach_to_beam: false
     generator_status_offset: 0
     keep_weight: true
-    
+
   - input_files:
       - input*.hepmc3.tree.root
     name: background

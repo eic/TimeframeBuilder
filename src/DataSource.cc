@@ -5,69 +5,71 @@
 void DataSource::UpdateTimeOffset(float timeframe_duration,
                                   float bunch_crossing_period,
                                   float global_phase,
-				  const std::vector<float>& populated_crossing_times,
-                                  std::mt19937& rng) {
-    float distance = 0.0f;
-    
-    // Calculate beam distance if needed (format-specific)
-    if (!getConfig().already_merged && getConfig().attach_to_beam) {
-        distance = calculateBeamDistance();
-    }
-    
-    current_time_offset_ = generateTimeOffset(distance, timeframe_duration, bunch_crossing_period, global_phase,
-                                              populated_crossing_times, rng);
+                                  const std::vector<float> &populated_crossing_times,
+                                  std::mt19937 &rng) {
+  float distance = 0.0f;
+
+  // Calculate beam distance if needed (format-specific)
+  if (!getConfig().already_merged && getConfig().attach_to_beam) {
+    distance = calculateBeamDistance();
+  }
+
+  current_time_offset_ = generateTimeOffset(
+      distance, timeframe_duration, bunch_crossing_period, global_phase,
+      populated_crossing_times, rng);
 }
 
-float DataSource::generateTimeOffset(float distance, float timeframe_duration, float bunch_crossing_period, float global_phase, 
-				     const std::vector<float>& populated_crossing_times, std::mt19937& rng) const {
-    const auto& config = getConfig();
+float DataSource::generateTimeOffset(float distance, float timeframe_duration,
+                                     float bunch_crossing_period,
+                                     float global_phase,
+                                     const std::vector<float> &populated_crossing_times,
+                                     std::mt19937 &rng) const {
+  const auto &config = getConfig();
 
-    float time_offset = 0.0; 
+  float time_offset;
+  if (!populated_crossing_times.empty() && !config.already_merged &&
+      (config.use_bunch_crossing || config.attach_to_beam)) {
+    std::uniform_int_distribution<size_t> uniform(
+        0, populated_crossing_times.size() - 1);
+    time_offset = populated_crossing_times[uniform(rng)];
+  } else {
+    std::uniform_real_distribution<float> uniform(0.0f, timeframe_duration);
+    time_offset = uniform(rng);
+  }
 
-    if((populated_crossing_times.size()>0)&&(!config.already_merged && (config.use_bunch_crossing||config.attach_to_beam))){
-      // constrain times to populated crossings 
-      std::uniform_int_distribution<int> uniform_int(0, populated_crossing_times.size()-1);
-      time_offset = populated_crossing_times[uniform_int(rng)];
+  if (!config.already_merged) {
+    // Apply bunch crossing if enabled
+    if (config.use_bunch_crossing) {
+      time_offset += global_phase * bunch_crossing_period;
     }
-    else{
-      // randomize within the timeframe window
-      std::uniform_real_distribution<float> uniform(0, timeframe_duration);
-      time_offset = uniform(rng); 
-    }
-    
-    if (!config.already_merged) {
-        
-        // Apply bunch crossing if enabled
-        if (config.use_bunch_crossing) {
-          time_offset += (global_phase * bunch_crossing_period);
-        }
-	
-        // Apply beam effects if enabled
-        if (config.attach_to_beam) {
-	  
-            // randomize within the bunch_crossing_period
-            std::uniform_real_distribution<float> uniform(0, bunch_crossing_period);
-            time_offset += uniform(rng); 
 
-            // Add time offset based on distance along beam
-	    time_offset += distance / config.beam_speed + (global_phase * bunch_crossing_period);
-            
-            // Add Gaussian spread if specified
-            if (config.beam_spread > 0.0f) {
-                std::normal_distribution<float> spread_dist(0.0f, config.beam_spread);
-                time_offset += spread_dist(rng);
-            }
-        }
+    // Apply beam effects if enabled
+    if (config.attach_to_beam) {
+      std::uniform_real_distribution<float> uniform(0.0f,
+                                                    bunch_crossing_period);
+      time_offset += uniform(rng);
 
+      // Add time offset based on distance along beam
+      time_offset += distance / config.beam_speed +
+                     global_phase * bunch_crossing_period;
+
+      // Add Gaussian spread if specified
+      if (config.beam_spread > 0.0f) {
+        std::normal_distribution<float> spread_dist(0.0f, config.beam_spread);
+        time_offset += spread_dist(rng);
+      }
     }
-    
-    return time_offset;
+  }
+
+  return time_offset;
 }
 
 float DataSource::calculateBeamDistance() const {
-    const auto& config = getConfig();
-    auto vertex = getBeamVertexPosition();
-    
-    // Distance is dot product of position vector relative to rotation around y of beam relative to z-axis
-    return vertex.z * std::cos(config.beam_angle) + vertex.x * std::sin(config.beam_angle);
+  const auto &config = getConfig();
+  auto vertex = getBeamVertexPosition();
+
+  // Distance is dot product of position vector relative to rotation around y of
+  // beam relative to z-axis
+  return vertex.z * std::cos(config.beam_angle) +
+         vertex.x * std::sin(config.beam_angle);
 }

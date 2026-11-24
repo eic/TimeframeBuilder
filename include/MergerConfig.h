@@ -4,56 +4,55 @@
 #include <vector>
 
 struct SourceConfig {
-    // Input/output configuration
-    std::vector<std::string> input_files;
-    std::string name{"signal"};
+  // Input/output configuration
+  std::vector<std::string> input_files;
+  std::string name{"signal"};
 
-    bool   already_merged{false};
+  bool already_merged{false};
 
-    long long  skip{0};
+  long long skip{0};
 
-    bool   static_number_of_events{false};
-    size_t static_events_per_timeframe{1};
-    float  mean_event_frequency{1.0f};
-    bool   use_bunch_crossing{false};
+  bool static_number_of_events{false};
+  size_t static_events_per_timeframe{1};
+  float mean_event_frequency{1.0f};
+  bool use_bunch_crossing{false};
 
-    // Beam background config, beam direction and speed
-    bool   attach_to_beam{false};
-    float  beam_angle{0.0f};
-    float  beam_speed{299.792458f}; //Speed of light in mm/ns
-    float  beam_spread{0.0f};
+  // Beam background config, beam direction and speed
+  bool attach_to_beam{false};
+  float beam_angle{0.0f};
+  float beam_speed{299.792458f}; // Speed of light in mm/ns
+  float beam_spread{0.0f};
 
-    // New generator status offset
-    int32_t  generator_status_offset{0};
-    bool     keep_weight{false};
+  // New generator status offset
+  int32_t generator_status_offset{0};
+  bool keep_weight{false};
 
-    // Tree properties
-    std::string tree_name{"events"};
-    bool repeat_on_eof{false};
+  // Tree properties
+  std::string tree_name{"events"};
+  bool repeat_on_eof{false};
 };
 
 struct MergerConfig {
-    bool   introduce_offsets{true};
-    float  timeframe_duration{2000.0f};
-    float  bunch_crossing_period{10.152f};
-    float  global_phase{0.5f};
-    size_t crossings_per_rev{1260};
-    size_t abort_gap{100};
-    size_t filled_crossings{1}; 
-    unsigned int random_seed{0};  // 0 means use random_device
+  bool introduce_offsets{true};
+  float timeframe_duration{2000.0f};
+  float bunch_crossing_period{10.152f};
+  float global_phase{0.5f};
+  size_t crossings_per_rev{1260};
+  size_t abort_gap{100};
+  size_t filled_crossings{1};
+  unsigned int random_seed{0}; // 0 means use random_device
 
-    // Bunch Pattern
-    std::vector<bool> bunch_pattern;
+  std::vector<bool> bunch_pattern;
 
-    // Config per source
-    std::vector<SourceConfig> sources;
+  // Config per source
+  std::vector<SourceConfig> sources;
 
-    // Input/output configuration
-    std::string output_file{"merged_timeframes.edm4hep.root"};
-    size_t max_events{100};
-    bool   merge_particles{false};
+  // Input/output configuration
+  std::string output_file{"merged_timeframes.edm4hep.root"};
+  size_t max_events{100};
+  bool merge_particles{false};
 
-    // Backend writer: "root" (ROOT TTree, default). Other backends (podio,
-    // arrow) register additional accepted values as they land.
-    std::string writer{"root"};
+  // Backend writer: "root" (ROOT TTree, default). Other backends (podio,
+  // arrow) register additional accepted values as they land.
+  std::string writer{"root"};
 };
